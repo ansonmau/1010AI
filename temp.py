@@ -33,5 +33,5 @@ SHAPE_PATTERNS = {
 
 c = 0
 for key in SHAPE_PATTERNS:
-        print("{}: '{}',".format(c, SHAPE_PATTERNS[key]))
+        print("'{}'".format(key), end = ',')
         c+=1

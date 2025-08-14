@@ -93,28 +93,27 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
-                shapeNames = SHAPENAME_TO_ID.keys()
-                shapeNames = sorted(shapeNames)
+                shapeIDs = SHAPE_PATTERNS.keys()
+                shapeIDs = sorted(shapeIDs)
 
                 numRows, numCols = self.board.getSize()
                 
                 emptyBoard = self.board.getEmptyBoard()
                 
-                for shapeName in shapeNames:
-                        currShape = Shape(shapeName)
-                        currID = currShape.getID()
+                for shapeID in shapeIDs:
+                        currShape = Shape.createFromID(shapeID)
                         shapeStartIndex = len(self.globalActionIndex)
                         for row in range(numRows):
                                 for col in range(numCols):
                                         currPos = (row,col)
                                         if emptyBoard.canPlaceShape(currShape, currPos):
-                                                currTuple = (currID, row, col)
+                                                currTuple = (shapeID, row, col)
                                                 currIndex = len(self.globalActionIndex)
 
                                                 self.globalActionIndex.append(currTuple)
                                                 self.tupleToAction[currTuple] = currIndex                
                         shapeEndIndex = len(self.globalActionIndex)
-                        self.actionIndexSlices[currID] = (shapeStartIndex, shapeEndIndex)
+                        self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
                         
 
                 

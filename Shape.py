@@ -20,8 +20,7 @@ SHAPE_PATTERNS = {
         18: '1000010000100001000010000'
 }
 
-
-SHAPENAMES = ['single']
+SHAPENAMES = ['single','small TR corner','small TL corner','small BL corner','small BR corner','large TR corner','large TL corner','large BL corner','large BR corner','small square','large square','2 horizontal','3 horizontal','4 horizontal','5 horizontal','2 vertical','3 vertical','4 vertical','5 vertical']
 
 SHAPENAME_TO_ID = {
         'single': 0,
@@ -57,8 +56,9 @@ class Shape:
                 self._calcDims()
                 self._calcOffsets()
         
-        def createFromID(self, ID):
-
+        def createFromID(ID):
+                shapeName = SHAPENAMES[ID]
+                return Shape(shapeName)
 
         def __str__(self):
                 return self.name
