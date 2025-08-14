@@ -1,5 +1,5 @@
 from Board import Board
-from Shape import Shape, SHAPENAME_TO_ID, SHAPE_PATTERNS
+from Shape import Shape, SHAPE_PATTERNS
 import random
 
 class Agent:                
@@ -95,23 +95,22 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
-                shapeNames = SHAPENAME_TO_ID.keys()
-                shapeNames = sorted(shapeNames)
+                shapeIDs = SHAPE_PATTERNS.keys()
+                shapeIDs = sorted(shapeIDs)
                 
-                for shapeName in shapeNames:
-                        currShape = Shape(shapeName)
-                        currID = currShape.getID()
+                for shapeID in shapeIDs:
+                        currShape = Shape.createFromID(shapeID)
                         shapeStartIndex = len(self.globalActionIndex)
 
                         for vRow, vCol in self._getValidPositions(currShape):
-                                currTuple = (currID, vRow, vCol)
+                                currTuple = (shapeID, vRow, vCol)
                                 self.globalActionIndex.append(currTuple)
 
                                 currIndex = len(self.globalActionIndex) - 1
                                 self.tupleToAction[currTuple] = currIndex
                                             
                         shapeEndIndex = len(self.globalActionIndex) - 1
-                        self.actionIndexSlices[currID] = (shapeStartIndex, shapeEndIndex)
+                        self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
         
         def _getValidPositions(self, shape: Shape):
                 nRows, nCols = self.board.getSize()
