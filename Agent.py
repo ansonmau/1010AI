@@ -115,6 +115,21 @@ class Agent:
                                                 self.tupleToAction[currTuple] = currIndex                
                         shapeEndIndex = len(self.globalActionIndex)
                         self.actionIndexSlices[currID] = (shapeStartIndex, shapeEndIndex)
-                        
+        
+        def _getValidPositions(self, shape: Shape):
+                nRows, nCols = self.board.getSize()
+                validPositions = []
 
+                # all shapes anchored top left
+                for row in range(nRows):
+                        for col in range(nCols):
+                                # check if shape size is within bounds of game
+                                # only have to worry about it being too large
+
+                                sHeight, sWidth = shape.getDims()
+                                if ((row + sHeight) < nRows-1) and ((col + sWidth) < nCols-1):
+                                        validPositions.append((row, col))
                 
+                return validPositions
+
+                        
