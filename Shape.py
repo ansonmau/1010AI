@@ -91,14 +91,19 @@ class Shape:
                                         self.offsets.append((rowCount, colCount))
                 
         def _calcDims(self):
+                spriteHeight = 5
+                spriteWidth = 5
+
                 width = 0
                 height = 0
 
-                for rowCount in range(5):
-                        for colCount in range(5):
-                                ind = rowCount*5 + colCount
+                for row in range(spriteHeight):
+                        for col in range(spriteWidth):
+                                ind = row*5 + col
                                 if self.pattern[ind] == '1':
-                                        width = colCount+1
-                                        height = rowCount+1
+                                        height = row
+                                        if col > width:
+                                                width = col
+                                        
                 
-                self.dims = (height, width)
+                self.dims = (height+1, width+1)
