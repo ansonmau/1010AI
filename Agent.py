@@ -123,7 +123,9 @@ class Agent:
                                 # only have to worry about it being too large
 
                                 sHeight, sWidth = shape.getDims()
-                                if ((row + sHeight) < nRows-1) and ((col + sWidth) < nCols-1):
+                                heightExt = sHeight - 1
+                                widthExt = sWidth - 1
+                                if ((row + heightExt) <= nRows-1) and ((col + widthExt) <= nCols-1):
                                         validPositions.append((row, col))
                 
                 return validPositions
