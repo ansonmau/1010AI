@@ -1,5 +1,5 @@
 from Board import Board
-from Shape import Shape, SHAPENAME_TO_ID, SHAPE_PATTERNS
+from Shape import Shape, SHAPE_PATTERNS
 import random
 
 class Agent:                
@@ -15,6 +15,8 @@ class Agent:
                 self.globalActionIndex = []
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
+
+                self.createGlobalActionIndex()
 
         def setBoard(self, board):
                 self.board = board
@@ -95,25 +97,37 @@ class Agent:
 
                 shapeIDs = SHAPE_PATTERNS.keys()
                 shapeIDs = sorted(shapeIDs)
-
-                numRows, numCols = self.board.getSize()
-                
-                emptyBoard = self.board.getEmptyBoard()
                 
                 for shapeID in shapeIDs:
                         currShape = Shape.createFromID(shapeID)
                         shapeStartIndex = len(self.globalActionIndex)
-                        for row in range(numRows):
-                                for col in range(numCols):
-                                        currPos = (row,col)
-                                        if emptyBoard.canPlaceShape(currShape, currPos):
-                                                currTuple = (shapeID, row, col)
-                                                currIndex = len(self.globalActionIndex)
 
-                                                self.globalActionIndex.append(currTuple)
-                                                self.tupleToAction[currTuple] = currIndex                
-                        shapeEndIndex = len(self.globalActionIndex)
+                        for vRow, vCol in self._getValidPositions(currShape):
+                                currTuple = (shapeID, vRow, vCol)
+                                self.globalActionIndex.append(currTuple)
+
+                                currIndex = len(self.globalActionIndex) - 1
+                                self.tupleToAction[currTuple] = currIndex
+                                            
+                        shapeEndIndex = len(self.globalActionIndex) - 1
                         self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
-                        
+        
+        def _getValidPositions(self, shape: Shape):
+                nRows, nCols = self.board.getSize()
+                validPositions = []
 
+                # all shapes anchored top left
+                for row in range(nRows):
+                        for col in range(nCols):
+                                # check if shape size is within bounds of game
+                                # only have to worry about it being too large
+
+                                sHeight, sWidth = shape.getDims()
+                                heightExt = sHeight - 1
+                                widthExt = sWidth - 1
+                                if ((row + heightExt) <= nRows-1) and ((col + widthExt) <= nCols-1):
+                                        validPositions.append((row, col))
                 
+                return validPositions
+
+                        
