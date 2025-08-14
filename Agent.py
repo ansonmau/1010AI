@@ -109,7 +109,7 @@ class Agent:
                                 currIndex = len(self.globalActionIndex) - 1
                                 self.tupleToAction[currTuple] = currIndex
                                             
-                        shapeEndIndex = len(self.globalActionIndex) - 1
+                        shapeEndIndex = len(self.globalActionIndex)
                         self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
         
         def _getValidPositions(self, shape: Shape):
