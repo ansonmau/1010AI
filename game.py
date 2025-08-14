@@ -1,5 +1,5 @@
 from Board import Board
-from Shape import Shape, SHAPE_NAMES
+from Shape import Shape, SHAPENAME_TO_ID
 from Agent import Agent
 from random import randrange
 
@@ -21,7 +21,7 @@ def testPlace(board : Board, shapeName, row, col):
 
 def generateShapes(num):
         shapes = []
-        shapeNames = SHAPE_NAMES.keys()
+        shapeNames = SHAPENAME_TO_ID.keys()
         shapeNames = list(shapeNames)
         for _ in range(num):
                 i = randrange(0, len(shapeNames))
