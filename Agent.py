@@ -16,6 +16,8 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
+                self.createGlobalActionIndex()
+
         def setBoard(self, board):
                 self.board = board
 
@@ -95,25 +97,20 @@ class Agent:
 
                 shapeNames = SHAPENAME_TO_ID.keys()
                 shapeNames = sorted(shapeNames)
-
-                numRows, numCols = self.board.getSize()
-                
-                emptyBoard = self.board.getEmptyBoard()
                 
                 for shapeName in shapeNames:
                         currShape = Shape(shapeName)
                         currID = currShape.getID()
                         shapeStartIndex = len(self.globalActionIndex)
-                        for row in range(numRows):
-                                for col in range(numCols):
-                                        currPos = (row,col)
-                                        if emptyBoard.canPlaceShape(currShape, currPos):
-                                                currTuple = (currID, row, col)
-                                                currIndex = len(self.globalActionIndex)
 
-                                                self.globalActionIndex.append(currTuple)
-                                                self.tupleToAction[currTuple] = currIndex                
-                        shapeEndIndex = len(self.globalActionIndex)
+                        for vRow, vCol in self._getValidPositions(currShape):
+                                currTuple = (currID, vRow, vCol)
+                                self.globalActionIndex.append(currTuple)
+
+                                currIndex = len(self.globalActionIndex) - 1
+                                self.tupleToAction[currTuple] = currIndex
+                                            
+                        shapeEndIndex = len(self.globalActionIndex) - 1
                         self.actionIndexSlices[currID] = (shapeStartIndex, shapeEndIndex)
         
         def _getValidPositions(self, shape: Shape):
