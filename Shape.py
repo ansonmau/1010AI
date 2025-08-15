@@ -53,8 +53,8 @@ class Shape:
                 self.offsets = []
                 self.dims = ()
                 
-                self._calcDims()
-                self._calcOffsets()
+                self._initDims()
+                self._initOffsets()
         
         def createFromID(ID):
                 shapeName = SHAPENAMES[ID]
@@ -82,7 +82,7 @@ class Shape:
         def getName(self):
                 return self.name
         
-        def _calcOffsets(self):
+        def _initOffsets(self):
                 self.offsets = []
                 for rowCount in range(5):
                         for colCount in range(5):
@@ -90,7 +90,7 @@ class Shape:
                                 if self.pattern[ind] == '1':
                                         self.offsets.append((rowCount, colCount))
                 
-        def _calcDims(self):
+        def _initDims(self):
                 spriteHeight = 5
                 spriteWidth = 5
 
@@ -126,3 +126,14 @@ class Shape:
                                                 width = col
                                         
                 return (height+1, width+1)
+
+        def getOffsetsFromID(shapeID):
+                offsets = []
+                pattern = SHAPE_PATTERNS[shapeID]
+                for rowCount in range(5):
+                        for colCount in range(5):
+                                ind = rowCount*5 + colCount
+                                if pattern[ind] == '1':
+                                        offsets.append((rowCount, colCount))
+                
+                return offsets
