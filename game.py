@@ -35,7 +35,6 @@ def main():
         b = Board(10,10)
         a = Agent(b, startingShapes)
         while a.canPlay():
-                a.createGlobalActionIndex()
                 b.printBoard()
                 print("Shapes left: {}".format([str(x) for x in a.shapes]))
                 print("Playable shapes: {}".format([str(x) for x in a.getPlayableShapes()]))
