@@ -16,7 +16,10 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
-                self.initGlobalActionIndex()
+                self.offsets = {}
+
+                self._initGlobalActionIndex()
+                self._initOffsets()
 
         def setBoard(self, board):
                 self.board = board
@@ -90,7 +93,7 @@ class Agent:
                 self.selectedPosition = self.possiblePositions[selectedPos]
                 self.selectedShape.setPos(*self.selectedPosition)
 
-        def initGlobalActionIndex(self):
+        def _initGlobalActionIndex(self):
                 self.globalActionIndex = []
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
@@ -129,4 +132,10 @@ class Agent:
                 
                 return validPositions
 
-                        
+        def _initOffsets(self):
+                # loop through each shape id
+                for shapeID in SHAPE_PATTERNS.keys():
+                        # calc offsets
+                        currOffsets = Shape.getOffsetsFromID(shapeID)
+                        # add to dict
+                        self.offsets[shapeID] = currOffsets
