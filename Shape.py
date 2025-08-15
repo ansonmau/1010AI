@@ -105,5 +105,22 @@ class Shape:
                                         if col > width:
                                                 width = col
                                         
-                
                 self.dims = (height+1, width+1)
+        
+        
+        def getDimsFromID(shapeID):
+                spriteHeight = 5
+                spriteWidth = 5
+
+                width = 0
+                height = 0
+
+                for row in range(spriteHeight):
+                        for col in range(spriteWidth):
+                                ind = row*5 + col
+                                if self.pattern[ind] == '1':
+                                        height = row
+                                        if col > width:
+                                                width = col
+                                        
+                return (height+1, width+1)
