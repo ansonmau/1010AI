@@ -16,7 +16,7 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
-                self.createGlobalActionIndex()
+                self.initGlobalActionIndex()
 
         def setBoard(self, board):
                 self.board = board
@@ -90,7 +90,7 @@ class Agent:
                 self.selectedPosition = self.possiblePositions[selectedPos]
                 self.selectedShape.setPos(*self.selectedPosition)
 
-        def createGlobalActionIndex(self):
+        def initGlobalActionIndex(self):
                 self.globalActionIndex = []
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
