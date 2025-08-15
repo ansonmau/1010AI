@@ -99,10 +99,9 @@ class Agent:
                 shapeIDs = sorted(shapeIDs)
                 
                 for shapeID in shapeIDs:
-                        currShape = Shape.createFromID(shapeID)
                         shapeStartIndex = len(self.globalActionIndex)
 
-                        for vRow, vCol in self._getValidPositions(currShape):
+                        for vRow, vCol in self._getValidPositions(shapeID):
                                 currTuple = (shapeID, vRow, vCol)
                                 self.globalActionIndex.append(currTuple)
 
@@ -112,7 +111,7 @@ class Agent:
                         shapeEndIndex = len(self.globalActionIndex)
                         self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
         
-        def _getValidPositions(self, shape: Shape):
+        def _getValidPositions(self, shapeID):
                 nRows, nCols = self.board.getSize()
                 validPositions = []
 
@@ -122,7 +121,7 @@ class Agent:
                                 # check if shape size is within bounds of game
                                 # only have to worry about it being too large
 
-                                sHeight, sWidth = shape.getDims()
+                                sHeight, sWidth = Shape.getDimsFromID(shapeID)
                                 heightExt = sHeight - 1
                                 widthExt = sWidth - 1
                                 if ((row + heightExt) <= nRows-1) and ((col + widthExt) <= nCols-1):
