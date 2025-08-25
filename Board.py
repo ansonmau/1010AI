@@ -20,6 +20,14 @@ class Board:
         def play(self, shape: Shape, pos):
                 self.place.shape(shape, pos)
 
+                played_move = (shape, pos)
+                points_gained, rows_cleared, cols_cleared = self.clear.check(played_move)
+                for row in rows_cleared:
+                        self.clear.clearRow(row)
+                for col in cols_cleared:
+                        self.clear.clearCol(col)
+                self.points.add(points_gained)
+                
 
         def getTurnNumber(self):
                 return self.turnNumber
@@ -66,6 +74,16 @@ class boardUtils:
                         print("-", end = '   ')
                 print()
                 return 
+
+        def getValidPositions(self, shape: Shape):
+                possiblePositions = []
+                for row in range(self.board.numRows):
+                        for col in range(self.board.numCols):
+                                currPos = (row, col)
+                                if self.board.isValid.shape(shape, currPos):
+                                        possiblePositions.append(currPos)
+                                        
+                return possiblePositions
 
 class shapeUtils:
         def __init__(self, board: Board):
@@ -129,15 +147,7 @@ class isValid:
                         
                 return True
         
-        def getValidPositions(self, shape: Shape):
-                possiblePositions = []
-                for row in range(self.board.numRows):
-                        for col in range(self.board.numCols):
-                                currPos = (row, col)
-                                if self.shape(shape, currPos):
-                                        possiblePositions.append(currPos)
 
-                return possiblePositions
 
 class clear:
         def __init__(self, board: Board):
@@ -164,7 +174,7 @@ class clear:
                 else:
                         points = 0
                         
-                return points
+                return points, rowsCleared, colsCleared
         
         def checkWithMask(self, shape, pos):
                 colsCleared = []
