@@ -16,13 +16,8 @@ class Agent:
                 self.tupleToAction = {}
                 self.actionIndexSlices = {}
 
-                self.offsets = {}
-
                 self._initGlobalActionIndex()
                 self._initOffsets()
-
-        def setBoard(self, board):
-                self.board = board
 
         def hasShapes(self):
                 return True if len(self.shapes) > 0 else False
@@ -131,11 +126,3 @@ class Agent:
                                         validPositions.append((row, col))
                 
                 return validPositions
-
-        def _initOffsets(self):
-                # loop through each shape id
-                for shapeID in SHAPE_PATTERNS.keys():
-                        # calc offsets
-                        currOffsets = Shape.getOffsetsFromID(shapeID)
-                        # add to dict
-                        self.offsets[shapeID] = currOffsets
