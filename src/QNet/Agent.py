@@ -1,5 +1,5 @@
-from Board import Board
-from Shape import Shape, SHAPE_PATTERNS
+from Game.Board import Board
+from Game.Shape import Shape
 import random
 
 class Agent:                

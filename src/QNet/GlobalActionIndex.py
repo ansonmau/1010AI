@@ -11,17 +11,16 @@ class GlobalActionIndex:
         self._shape_slices = {}
         self._tuple_to_action = {}
 
-        self._generate_index()
+        self.__generate_index()
 
-    def _generate_index(self):
+    def __generate_index(self):
             """
             generates all possible moves (global action index)
 
-            returns:
-                global action index [list] -> all possible moves in the game
-                tuple to action [dict] -> gives index of a tuple in the gai
-                action index slices [dict] -> dict that gives the index range of a
-                specific shape's possible moves in the gai
+            global action index [list] -> all possible moves in the game
+            tuple to action [dict]     -> gives index of a tuple in the gai
+            action index slices [dict] -> dict that gives the index range of a
+            specific shape's possible moves in the gai
             """
 
             temp_board = Board(DEFAULT_NUM_ROWS, DEFAULT_NUM_COLS)
@@ -39,6 +38,4 @@ class GlobalActionIndex:
                             self._tuple_to_action[currTuple] = currIndex
                                         
                     shapeEndIndex = len(self._index)
-                    self._shape_slices[shapeID] = (shapeStartIndex, shapeEndIndex)
 
-            return gai

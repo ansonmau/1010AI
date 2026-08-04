@@ -1,4 +1,4 @@
-from Shape import Shape
+from Game.Shape import Shape
 
 class Action:
         def __init__(self, shape: Shape, row, col):

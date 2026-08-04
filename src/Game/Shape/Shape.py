@@ -28,7 +28,7 @@ shape_dims = {}
 def initialize_shape_data():
         for shape_id in SHAPE_PATTERNS:
                 shape_offsets[shape_id] = getOffsetsFromID(id)
-                shape_dims[shape_id] = getDimsFromID(id)
+                shape_dims[shape_id]    = getDimsFromID(id)
 
 def getDimsFromID(shapeID):
         spriteHeight = 5

@@ -1,6 +1,6 @@
-from Board import Board
-from Shape import Shape, SHAPENAMES, initialize_shape_data
-from Agent import Agent
+from Game.Board.Board import Board
+from Game.Shape.Shape import Shape, SHAPENAMES, initialize_shape_data
+from QNet.Agent import Agent
 from random import randrange
 
 def generateShapes(num):
@@ -14,7 +14,7 @@ def giveAgentShapes(agent: Agent):
         shapes = generateShapes(3)
         agent.addShapes(shapes)
 
-def main(): 
+def main1(): 
         initialize_shape_data()
         startingShapes = generateShapes(3)
 
@@ -37,6 +37,9 @@ def main():
 
         return 
 
+def main():
+    b = Board(10,10)
+    b.utils.printBoard()
 
 if __name__ == "__main__":
         main()

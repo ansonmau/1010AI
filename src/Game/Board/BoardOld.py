@@ -1,20 +1,20 @@
-from Shape import Shape
+from Game.Shape import Shape
 
 class Board:
         def __init__(self, numRows, numCols):
-                self.numRows = numRows
-                self.numCols = numCols
-                self.prevMove = ()
+                self.numRows     = numRows
+                self.numCols     = numCols
                 self.point_count = 0
-                self.turnNumber = 0
-                self.board_raw = self.generateBoard()
+                self.turnNumber  = 0
+                self.board_raw   = self.generateBoard()
                 
-                self.place = place(self)
-                self.isValid = isValid(self)
-                self.clear = clear(self)
+                self.place      = place(self)
+                self.isValid    = isValid(self)
+                self.clear      = clear(self)
+                self.points     = points(self)
+
+                self.utils      = boardUtils(self)
                 self.clearUtils = clearUtils(self)
-                self.utils = boardUtils(self)
-                self.points = points(self)
                 self.shapeUtils = shapeUtils(self)
         
         def play(self, shape: Shape, pos):
@@ -26,6 +26,7 @@ class Board:
                         self.clear.clearRow(row)
                 for col in cols_cleared:
                         self.clear.clearCol(col)
+
                 self.points.add(points_gained)
                 
 
@@ -246,7 +247,7 @@ class points:
                 self.board = board
 
         def add(self, pointsGained):
-                self.board.points += pointsGained
+                self.board.point_count += pointsGained
         
         def get(self):
-                return self.board.points
+                return self.board.point_count
