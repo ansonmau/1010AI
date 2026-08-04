@@ -1,6 +1,6 @@
 from Game.Shape.Shape import Shape, getDimsFromID, getOffsetsFromID
 
-class ValidCheck:
+class ValidCheckUtils:
     def __init__(self, board):
         self._board = board 
         self._nrows, self._ncols = self._board.get_size()
@@ -11,15 +11,6 @@ class ValidCheck:
     def _is_empty(self, pos):
         row, col = pos
         return self._board.get_board()[row][col] == False
-
-    def _calculate_shape_block_positions(self, shape: Shape, pos):
-        positions = []
-        target_row, target_col = pos
-
-        for dR, dC in getOffsetsFromID(shape.getID()):
-            positions.append((target_row + dR, target_col + dC))
-        
-        return positions
 
 
     # ╭────────────────────────────────────────────────╮
@@ -42,7 +33,7 @@ class ValidCheck:
             return False
 
         # check if any positions are already filled
-        for block_position in self._calculate_shape_block_positions(shape, pos):
+        for block_position in self._board.utils.get_shape_block_positions(shape, pos):
             if not self._is_empty(block_position):
                     return False
                 

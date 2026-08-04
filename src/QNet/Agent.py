@@ -12,13 +12,6 @@ class Agent:
                 self.possiblePositions = []
                 self.selectedPosition = ()
 
-                self.globalActionIndex = []
-                self.tupleToAction = {}
-                self.actionIndexSlices = {}
-
-                self._initGlobalActionIndex()
-                self._initOffsets()
-
         def hasShapes(self):
                 return True if len(self.shapes) > 0 else False
 
@@ -88,26 +81,6 @@ class Agent:
                 self.selectedPosition = self.possiblePositions[selectedPos]
                 self.selectedShape.setPos(*self.selectedPosition)
 
-        def _initGlobalActionIndex(self):
-                self.globalActionIndex = []
-                self.tupleToAction = {}
-                self.actionIndexSlices = {}
-
-                shapeIDs = SHAPE_PATTERNS.keys()
-                shapeIDs = sorted(shapeIDs)
-                
-                for shapeID in shapeIDs:
-                        shapeStartIndex = len(self.globalActionIndex)
-
-                        for vRow, vCol in self._getValidPositions(shapeID):
-                                currTuple = (shapeID, vRow, vCol)
-                                self.globalActionIndex.append(currTuple)
-
-                                currIndex = len(self.globalActionIndex) - 1
-                                self.tupleToAction[currTuple] = currIndex
-                                            
-                        shapeEndIndex = len(self.globalActionIndex)
-                        self.actionIndexSlices[shapeID] = (shapeStartIndex, shapeEndIndex)
         
         def _getValidPositions(self, shapeID):
                 nRows, nCols = self.board.getSize()

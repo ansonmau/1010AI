@@ -1,5 +1,5 @@
-from Board import Board
-from Shape import getAllShapeIDs
+from Game.Board.Board import Board
+from Game.Shape.Shape import getAllShapeIDs
 
 
 DEFAULT_NUM_ROWS = 10
@@ -28,7 +28,7 @@ class GlobalActionIndex:
             for shapeID in getAllShapeIDs():
                     shapeStartIndex = len(self._index)  # for shape ranges
 
-                    for valid_position in temp_board.utils.getValidPositions(shapeID):
+                    for valid_position in temp_board.check.get_all_valid_positions(shapeID):
                             # given an empty board, valid positions should be all positions that aren't impossible
                             x_pos, y_pos = valid_position
                             currTuple = (shapeID, x_pos, y_pos)

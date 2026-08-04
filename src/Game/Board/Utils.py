@@ -1,4 +1,4 @@
-from Game.Shape.Shape import Shape
+from Game.Shape.Shape import Shape, getOffsetsFromID
 
 class BoardUtils:
     def __init__(self, board):
@@ -23,15 +23,13 @@ class BoardUtils:
 
         return 
 
-    class ValidCheck:
-        def get_all_valid_positions(self, shape: Shape):
-            n_rows, n_cols = self._board.get_size()
+    
+    def get_shape_block_positions(self, shape: Shape, pos: tuple):
+        positions = []
+        target_row, target_col = pos
 
-            possiblePositions = []
-            for row in range(self.board.numRows):
-                for col in range(self.board.numCols):
-                    currPos = (row, col)
-                    if self.board.isValid.shape(shape, currPos):
-                        possiblePositions.append(currPos)
-                                    
-            return possiblePositions
+        for dR, dC in getOffsetsFromID(shape.getID()):
+            positions.append((target_row + dR, target_col + dC))
+        
+        return positions
+
