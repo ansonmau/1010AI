@@ -21,7 +21,11 @@ class Board:
         self.place        = PlaceUtils(self)
 
     def play_shape(self, shape: Shape, pos):
-        self.place.shape(shape, pos)
+        err = self.place.shape(shape, pos)
+        if err:
+            print("Failed to place shape. Wrong area?")
+            return 1
+
         move = (shape, pos)
         pts_gained, cleared_rows, cleared_cols = self.clear.clear(move)
 
@@ -29,8 +33,11 @@ class Board:
             self.clear.clear_row(row)
         for col in cleared_cols:
             self.clear.clear_col(col)
-        
+
+        self._turn_count += 1
         self._point_count += pts_gained
+
+        return 0
 
     
     def get_turn_count(self):
@@ -62,7 +69,7 @@ class Board:
         self._rboard[row][col] = False
 
     def reset(self):
-        self._rboard     = self._generate_board()
+        self._rboard      = self._generate_board()
         self._point_count = 0
         self._turn_count  = 0
 

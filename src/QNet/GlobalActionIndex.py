@@ -1,5 +1,5 @@
 from Game.Board.Board import Board
-from Game.Shape.Shape import getAllShapeIDs
+from Game.Shape.Shape import Shape
 
 
 DEFAULT_NUM_ROWS = 10
@@ -13,6 +13,11 @@ class GlobalActionIndex:
 
         self.__generate_index()
 
+    def print(self):
+        print(f"{self._index}")
+        print(f"{self._shape_slices}")
+        print(f"{self._tuple_to_action}")
+
     def __generate_index(self):
             """
             generates all possible moves (global action index)
@@ -24,18 +29,19 @@ class GlobalActionIndex:
             """
 
             temp_board = Board(DEFAULT_NUM_ROWS, DEFAULT_NUM_COLS)
+            all_shape_ids = Shape.PATTERNS.keys()
 
-            for shapeID in getAllShapeIDs():
-                    shapeStartIndex = len(self._index)  # for shape ranges
+            for shapeID in all_shape_ids:
+                shapeStartIndex = len(self._index)  # for shape ranges
 
-                    for valid_position in temp_board.check.get_all_valid_positions(shapeID):
-                            # given an empty board, valid positions should be all positions that aren't impossible
-                            x_pos, y_pos = valid_position
-                            currTuple = (shapeID, x_pos, y_pos)
-                            self._index.append(currTuple)
+                for valid_position in temp_board.check.get_all_valid_positions(Shape(shapeID)):
+                    # given an empty board, valid positions should be all positions that aren't impossible
+                    x_pos, y_pos = valid_position
+                    currTuple = (shapeID, x_pos, y_pos)
+                    self._index.append(currTuple)
 
-                            currIndex = len(self._index) - 1
-                            self._tuple_to_action[currTuple] = currIndex
-                                        
-                    shapeEndIndex = len(self._index)
+                    currIndex = len(self._index) - 1
+                    self._tuple_to_action[currTuple] = currIndex
+                                    
+                shapeEndIndex = len(self._index)
 

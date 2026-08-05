@@ -24,7 +24,6 @@ class Shape:
             18: '1000010000100001000010000'
         }
 
-
         def __init__(self, id):
             self._id = id
             self._name = Shape.NAMES[self._id]
@@ -45,7 +44,17 @@ class Shape:
             return self._id
 
         def get_pattern(self):
-            return Shape.PATTERNS[self._id]
+            return self._pattern
+
+        def get_arr_repr(self):
+            arr = []
+            for i in range(5):
+                row = []
+                for j in range(5):
+                    row.append(self._pattern[i+j])
+                arr.append(row)
+
+            return arr
 
         def clone(self):
             return Shape(self._id)

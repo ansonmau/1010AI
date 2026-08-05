@@ -1,18 +1,19 @@
-from Game.Board.Board import Board
+from typing import TYPE_CHECKING
 from Game.Shape.Shape import Shape
 
+if TYPE_CHECKING:
+    from Game.Board.Board import Board
 
 class ClearUtils:
-        def __init__(self, board: Board):
+        def __init__(self, board: "Board"):
                 self._board = board
                 self._nrows, self._ncols = self._board.get_size()
 
         def clear(self, move_tuple):
-                cleared = 0
-                colsCleared = []
-                rowsCleared = []
-
-                shape, pos = move_tuple
+                total_cleared = 0
+                colsCleared   = []
+                rowsCleared   = []
+                shape, pos    = move_tuple
 
                 blocks_pos = self._board.utils.get_shape_block_positions(shape, pos)
                 for row, col in blocks_pos:
@@ -24,13 +25,13 @@ class ClearUtils:
                 total_cleared = len(colsCleared) + len(rowsCleared)
                 
                 if total_cleared > 0:
-                        points = (100 + 200*(cleared-1))
+                        points = (100 + 200*(total_cleared-1))
                 else:
                         points = 0
                         
                 return points, rowsCleared, colsCleared
         
-        def check_with_mask(self, shape, pos):
+        def simulate(self, shape, pos):
                 colsCleared = []
                 rowsCleared = []
                 
@@ -47,7 +48,7 @@ class ClearUtils:
                 else:
                         points = 0
 
-                return points
+                return points, rowsCleared, colsCleared
         
         def clear_col(self, col):
                 for i in range(self._nrows):

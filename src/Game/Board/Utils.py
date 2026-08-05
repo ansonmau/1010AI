@@ -1,4 +1,4 @@
-from Game.Shape.Shape import Shape, getOffsetsFromID
+from Game.Shape.Shape import Shape
 
 class BoardUtils:
     def __init__(self, board):
@@ -28,7 +28,7 @@ class BoardUtils:
         positions = []
         target_row, target_col = pos
 
-        for dR, dC in getOffsetsFromID(shape.getID()):
+        for dR, dC in shape.get_offsets():
             positions.append((target_row + dR, target_col + dC))
         
         return positions

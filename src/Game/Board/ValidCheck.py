@@ -1,4 +1,4 @@
-from Game.Shape.Shape import Shape, getDimsFromID, getOffsetsFromID
+from Game.Shape.Shape import Shape
 
 class ValidCheckUtils:
     def __init__(self, board):
@@ -25,7 +25,7 @@ class ValidCheckUtils:
 
     def check_shape(self, shape: Shape, pos):
         row,col = pos
-        shape_height, shape_width = getDimsFromID(shape.getID())
+        shape_height, shape_width = shape.get_dimensions()
 
         # check if shape would even fit on the board at pos
         # if 2x2, then it should check row+1 and col+1 assuming top left corner start
