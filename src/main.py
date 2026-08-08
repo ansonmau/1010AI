@@ -1,6 +1,5 @@
 from Game.Board.Board       import Board
 from Game.Shape.Shape       import Shape
-from QNet.AgentOld          import Agent
 from QNet.GlobalActionIndex import GlobalActionIndex
 from random                 import randrange
 
@@ -14,10 +13,10 @@ def generateShapes(num):
                 shapes.append(Shape(shape_id))
         return shapes
 
-def giveAgentShapes(agent: Agent):
-        shapes = generateShapes(3)
-        for shape in shapes:
-            agent.addShape(shape)
+# def giveAgentShapes(agent: Agent):
+#         shapes = generateShapes(3)
+#         for shape in shapes:
+#             agent.addShape(shape)
 
 def manual_play():
     board = Board(10,10)
@@ -61,14 +60,14 @@ def agent_play():
 
 def qnet_play():
     b = Board(10,10)
-    a = Agent(b)
     tensor_board = torch.tensor(b.get_board(), dtype=torch.float32)
     print(tensor_board)
     print(tensor_board.shape)
     print(tensor_board.dtype)
 
-    s = Shape(1)
-    print(s.get_arr_repr())
+    inventory = generateShapes(3)
+    for s in inventory:
+        print(s.get_arr_repr())
 
     # giveAgentShapes(a)
     #
