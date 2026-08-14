@@ -18,6 +18,9 @@ class GlobalActionIndex:
         print(f"{self._shape_slices}")
         print(f"{self._tuple_to_action}")
 
+    def get_size(self):
+        return len(self._index)
+
     def __generate_index(self):
             """
             generates all possible moves (global action index)
@@ -44,4 +47,5 @@ class GlobalActionIndex:
                     self._tuple_to_action[currTuple] = currIndex
                                     
                 shapeEndIndex = len(self._index)
+                self._shape_slices.update({shapeID: (shapeStartIndex, shapeEndIndex)})
 
