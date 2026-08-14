@@ -13,14 +13,24 @@ class GlobalActionIndex:
 
         self.__generate_index()
 
+
+    # ── api ───────────────────────────────────────────────────────────────
+    def get(self, ind):
+        return self._index[ind]
+
+    def get_index(self):
+        return self._index
+
+    def get_size(self):
+        return len(self._index)
+
     def print(self):
         print(f"{self._index}")
         print(f"{self._shape_slices}")
         print(f"{self._tuple_to_action}")
 
-    def get_size(self):
-        return len(self._index)
 
+    # ── helpers ───────────────────────────────────────────────────────────
     def __generate_index(self):
             """
             generates all possible moves (global action index)
