@@ -14,6 +14,7 @@ class Board:
         self._rboard      = self._generate_board()    # raw board
         self._turn_count  = 0
         self._point_count = 0
+        self._point_diff = 0
 
         self.utils        = BoardUtils(self)
         self.check        = ValidCheckUtils(self)
@@ -34,7 +35,8 @@ class Board:
         for col in cleared_cols:
             self.clear.clear_col(col)
 
-        self._turn_count += 1
+        self._turn_count  += 1
+        self._point_diff  = pts_gained
         self._point_count += pts_gained
 
         return 0
@@ -45,6 +47,9 @@ class Board:
 
     def get_point_count(self):
         return self._point_count
+
+    def get_point_diff(self):
+        return self._point_diff
 
     def get_size(self):
         return (self._nrows, self._ncols)
@@ -71,6 +76,7 @@ class Board:
     def reset(self):
         self._rboard      = self._generate_board()
         self._point_count = 0
+        self._point_diff  = 0
         self._turn_count  = 0
 
     def _generate_board(self):
