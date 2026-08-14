@@ -23,6 +23,11 @@ class ValidCheckUtils:
                 return True 
         return False
 
+    def check_gai(self, gai_entry):
+        # (shape_id, row, col)
+        shape = Shape(gai_entry[0])
+        return self.check_shape(shape, (gai_entry[1], gai_entry[2]))
+
     def check_shape(self, shape: Shape, pos):
         row,col = pos
         shape_height, shape_width = shape.get_dimensions()
