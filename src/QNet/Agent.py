@@ -178,7 +178,7 @@ class Agent:
             move = legal_moves[random.randrange(len(legal_moves))]
             move = move.item() # convert from tensor to value (int in this case)
         else:
-            q_vals = self._qnet.forward().squeeze(0) # get rid of batch dim @ ind0 (1, gai_size) -> (gai_size)
+            q_vals = self.get_qvals().squeeze(0) # get rid of batch dim @ ind0 (1, gai_size) -> (gai_size)
             q_vals[mask==0] = float('-inf') # tensor feature
             move = q_vals.argmax().item()
 
@@ -217,7 +217,7 @@ class Agent:
         # - qvals are returned in a (32, gai_size) batch, we want values from the 1st dimension
         # - must match actions tensor to qval tensor dimensions
         all_live_qvals = self.get_qvals(b_board, b_pieces)
-        predicted_qvals = all_live_qvals.gather(1, t_actions).squeeze(1) # turn back into 1d list 
+        predicted_qvals = all_live_qvals.gather(1, t_actions.unsqueeze(0)).squeeze(1) # turn back into 1d list 
 
 
         # get target qvals and plug them into bellman eq to get predicted "correct" qvals

@@ -16,7 +16,7 @@ INV_OUT_CHANNELS   = 16
 COMBINE_OUT_CHANNELS = 256
 
 BOARD_OUT_SIZE = 10 * 10 * (BOARD_OUT_CHANNELS * 2) # since second board layer outputs 2*out_channels
-INV_OUT_SIZE   = 3 * 5 * 5 * INV_OUT_CHANNELS
+INV_OUT_SIZE   = 5 * 5 * INV_OUT_CHANNELS
 
 class QNet(nn.Module):
     def __init__(self, agent: "Agent"):
@@ -44,9 +44,9 @@ class QNet(nn.Module):
 
     def forward(self, board_tensor = None, inv_tensor = None):
         if board_tensor is None:
-            board_tensor = self._agent.get_board_tensor().unsqueeze(0) # add batch dim @ ind0 (1, 10, 10) -> (1, 1, 10, 10)
+            board_tensor = self._agent.get_board_tensor().unsqueeze(0) # add batch dim @ ind0 (10, 10) -> (1, 10, 10)
         if inv_tensor is None:
-            inv_tensor = self._agent.get_inventory_tensor().unsqueeze(0)
+            inv_tensor = self._agent.get_inventory_tensor()
 
         board_feats = self.board_lyrs(board_tensor)
         inv_feats = self.inv_lyrs(inv_tensor)
