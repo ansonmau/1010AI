@@ -42,9 +42,14 @@ class QNet(nn.Module):
                 )
 
 
-    def foward(self):
-        board_feats = self.board_lyrs(self._agent.get_board_tensor().unsqueeze(0)) # conv2d layer needs batch dimension at ind 0
-        inv_feats = self.inv_lyrs(self._agent.get_inventory_tensor().unsqueeze(0)) # ^
+    def forward(self, board_tensor = None, inv_tensor = None):
+        if not board_tensor:
+            board_tensor = self._agent.get_board_tensor().unsqueeze(0) # add batch dim @ ind0 (1, 10, 10) -> (1, 1, 10, 10)
+        if not inv_tensor:
+            inv_tensor = self._agent.get_inventory_tensor().unsqueeze(0)
+
+        board_feats = self.board_lyrs(board_tensor)
+        inv_feats = self.inv_lyrs(inv_tensor)
 
         board_feats = board_feats.flatten(start_dim=1)
         inv_feats = inv_feats.flatten(start_dim=1)

@@ -29,6 +29,10 @@ class ValidCheckUtils:
         return self.check_shape(shape, (gai_entry[1], gai_entry[2]))
 
     def check_shape(self, shape: Shape, pos):
+        if shape.get_id() == 0:
+            # null piece cannot be placed
+            return False
+
         row,col = pos
         shape_height, shape_width = shape.get_dimensions()
 

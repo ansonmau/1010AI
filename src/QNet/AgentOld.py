@@ -1,7 +1,7 @@
-from typing           import TYPE_CHECKING
 from Game.Shape.Shape import Shape
 import random
 
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Game.Board.Board import Board
 
