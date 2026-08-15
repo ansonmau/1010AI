@@ -26,7 +26,8 @@ class ValidCheckUtils:
     def check_gai(self, gai_entry):
         # (shape_id, row, col)
         shape = Shape(gai_entry[0])
-        return self.check_shape(shape, (gai_entry[1], gai_entry[2]))
+        pos = (gai_entry[1], gai_entry[2])
+        return self.check_shape(shape, pos)
 
     def check_shape(self, shape: Shape, pos):
         if shape.get_id() == 0:
@@ -49,6 +50,9 @@ class ValidCheckUtils:
         return True
 
     def get_all_valid_positions(self, shape: Shape):
+        if shape.get_id() == 0: # null shape
+            return []
+
         possiblePositions = []
         for row in range(self._nrows):
             for col in range(self._ncols):

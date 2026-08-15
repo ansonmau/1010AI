@@ -43,9 +43,9 @@ class QNet(nn.Module):
 
 
     def forward(self, board_tensor = None, inv_tensor = None):
-        if not board_tensor:
+        if board_tensor is None:
             board_tensor = self._agent.get_board_tensor().unsqueeze(0) # add batch dim @ ind0 (1, 10, 10) -> (1, 1, 10, 10)
-        if not inv_tensor:
+        if inv_tensor is None:
             inv_tensor = self._agent.get_inventory_tensor().unsqueeze(0)
 
         board_feats = self.board_lyrs(board_tensor)

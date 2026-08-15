@@ -1,4 +1,4 @@
-
+from random import randrange
 class Shape:
         NAMES = ['NULLPIECE', 'single','small TR corner','small TL corner','small BL corner','small BR corner','large TR corner','large TL corner','large BL corner','large BR corner','small square','large square','2 horizontal','3 horizontal','4 horizontal','5 horizontal','2 vertical','3 vertical','4 vertical','5 vertical']
 
@@ -35,6 +35,14 @@ class Shape:
             id = Shape.NAMES.index(name)
             return Shape(id)
 
+        @staticmethod
+        def get_random_shape():
+            return Shape(randrange(1, len(Shape.PATTERNS)))
+        
+        @staticmethod
+        def get_null_shape():
+            return Shape(0)
+
         def get_offsets(self):
             return Shape._get_offsets_from_id(self._id)
 
@@ -52,7 +60,7 @@ class Shape:
             for i in range(5):
                 row = []
                 for j in range(5):
-                    row.append(self._pattern[i+j])
+                    row.append(int(self._pattern[i+j]))
                 arr.append(row)
 
             return arr

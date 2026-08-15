@@ -1,45 +1,37 @@
+# ──────────────────────────────────────────────────────────────────────
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    pass
+# ──────────────────────────────────────────────────────────────────────
 import random
 import torch 
+from QNet.Agent import Agent, EPSILON_DECAY, EPSILON_MIN
+from Game.Board.Board import Board
+# ──────────────────────────────────────────────────────────────────────
 
-from typing import TYPE_CHECKING
+def main():
+    episode_count = 5
+    board = Board(10,10)
+    agent = Agent(board)
+    epsilon = 1
+    batch_size = 32
 
-if TYPE_CHECKING:
-    from Game.Board.Board import Board
-    from QNet.Agent import Agent
+    for _ in range(episode_count):
+        agent.reset()
+        agent.print_state()
+        while agent._can_play():
+            state = agent._observe_gamestate()
+            move = agent.choose_move(epsilon)
+            next_state, reward, can_play, info = agent.step(move)
+            agent.exp.save(state, move, reward, next_state, can_play)
+            agent.training_step(batch_size)
+            agent.update_target_net() # only updates every 1000 steps
+            print(f"Turn number: {agent._step_count}")
+            agent.print_state()
+        epsilon = max(EPSILON_MIN, epsilon * EPSILON_DECAY)
 
-
-def training_step(agent: "Agent", batch_size, discount):
-    if agent.exp.get_size() < batch_size:
-        # not enough experience
-        return
-
-    # ─────────────────────────< pull up experience >─────────────────────────
-    # get samples
-    states, actions, rewards, next_states, can_plays = agent.exp.sample(batch_size)
-
-    # turn samples into tensors (batches)
-
-    # states: (inv_tensor, board_tensor)
-    # current board + pieces batches
-    b_board = torch.stack([s[1] for s in states])
-    b_pieces = torch.stack([s[0] for s in states])
-
-    # next board + pieces batches
-    next_b_board = torch.stack([s[1] for s in next_states])
-    next_b_pieces = torch.stack([s[0] for s in next_states])
-
-    # others
-    t_rewards = torch.tensor(rewards, dtype=torch.float32)
-    t_can_plays = torch.tensor(can_plays, dtype=torch.float32)
-    t_actions = torch.tensor(actions)
-
-    # ───────────────────< compare live and target qvals >─────────────────
-    live_qvals = agent.get_qvals()
-    predicted_qvals = live_qvals.gather(1, t_actions.unsqueeze(1)).squeeze(1)
-    target_qvals = agent.get_target_qvals()
-
-
-
+if __name__ == "__main__":
+    main()
 
 
 

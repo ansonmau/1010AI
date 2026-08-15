@@ -16,7 +16,6 @@ class ExperienceReplay:
         # want to return (s1,s2,...), (r1,r2,...), ...
         states, actions, rewards, next_states, can_plays = zip(*batch)
 
-
         return states, actions, rewards, next_states, can_plays
 
     def get_size(self):
