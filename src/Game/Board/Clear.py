@@ -25,7 +25,8 @@ class ClearUtils:
                 total_cleared = len(colsCleared) + len(rowsCleared)
                 
                 if total_cleared > 0:
-                        points = (100 + 200*(total_cleared-1))
+                        # points = (100 + 200*(total_cleared-1))
+                        points = 100 * total_cleared
                 else:
                         points = 0
                         
