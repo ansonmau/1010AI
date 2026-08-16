@@ -8,18 +8,20 @@ class Board:
     DEFAULT_VALUE = False
 
     def __init__(self, nrows, ncols):
-        self._nrows       = nrows
-        self._ncols       = ncols
+        self._nrows = nrows
+        self._ncols = ncols
+        self._rsize = nrows * ncols
 
         self._rboard      = self._generate_board()    # raw board
         self._turn_count  = 0
         self._point_count = 0
         self._point_diff  = 0
+        self._filled      = 0
 
-        self.utils        = BoardUtils(self)
-        self.check        = ValidCheckUtils(self)
-        self.clear        = ClearUtils(self)
-        self.place        = PlaceUtils(self)
+        self.utils = BoardUtils(self)
+        self.check = ValidCheckUtils(self)
+        self.clear = ClearUtils(self)
+        self.place = PlaceUtils(self)
 
     def play_shape(self, shape: Shape, pos):
         err = self.place.shape(shape, pos)
@@ -35,9 +37,11 @@ class Board:
         for col in cleared_cols:
             self.clear.clear_col(col)
 
+        # stat tracking
+        self._point_diff   = pts_gained
         self._turn_count  += 1
-        self._point_diff  = pts_gained
         self._point_count += pts_gained
+        self._filled      += shape.get_volume()
 
         return 0
 
@@ -56,6 +60,9 @@ class Board:
 
     def get_board(self):
         return self._rboard
+
+    def get_filled_ratio(self):
+        return round(self._filled / self._rsize, 2)
 
     def get(self, pos):
         row,col = pos
@@ -76,6 +83,7 @@ class Board:
     def reset(self):
         self._rboard      = self._generate_board()
         self._point_count = 0
+        self._filled      = 0
         self._point_diff  = 0
         self._turn_count  = 0
 
