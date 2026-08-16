@@ -15,14 +15,15 @@ if TYPE_CHECKING:
 TARGET_NET_UPDATE_INTERVAL = 500
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
-EPSILON_DECAY              = 0.995
+EPSILON_DECAY              = 0.998
 # optimizer settings
 LEARNING_RATE              = 0.001
+EXP_SIZE                   = 50000
 
 class Agent:                
     def __init__(self, board: "Board"):
         self.gai             = GlobalActionIndex()
-        self.exp             = ExperienceReplay(1000)
+        self.exp             = ExperienceReplay(EXP_SIZE)
 
         self._board          = board
         self._step_count     = 0
@@ -117,11 +118,15 @@ class Agent:
 
     def _calc_reward(self):
         reward = 0
+        b = self._board
 
+
+        # points = (100 + 200*(total_cleared-1))
         factors = {
-                "points gained": 50 * self._board.get_point_diff(), # points = (100 + 200*(total_cleared-1))
-                "loss penalty": 0 if self._can_play() else -200,
-                "survival": 10 * self._board.get_turn_count(), 
+                "loss penalty":             -300 if not self._can_play() else 0,
+                "points gained":            b.get_point_diff(), 
+                "filling up space penalty": -(10 * b.get_filled_ratio()),
+                # placing a block that fills a line?
                 }
         
         for v in factors.values():
