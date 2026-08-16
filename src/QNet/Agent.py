@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from Game.Board.Board import Board
     from Game.Shape.Shape import Shape
 # ──────────────────────────────────────────────────────────────────────
-TARGET_NET_UPDATE_INTERVAL = 1000
+TARGET_NET_UPDATE_INTERVAL = 30
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
 EPSILON_DECAY              = 0.995
@@ -51,7 +51,7 @@ class Agent:
                 self._curr_inv_size -= 1
         
         # fill inventory if empty
-        if self._curr_inv_size == 0:
+        if self._curr_inv_size <= 0:
             self._fill_inventory()
             self._curr_inv_size = self.inventory_size
 
@@ -103,7 +103,7 @@ class Agent:
     # │                  env helpers                   │
     # ╰────────────────────────────────────────────────╯
     def _observe_gamestate(self):
-        return (self.get_board_tensor().unsqueeze(0), self.get_inventory_tensor())
+        return (self.get_board_tensor(), self.get_inventory_tensor())
 
     def _can_play(self):
         for shape in self._inventory:
@@ -155,7 +155,8 @@ class Agent:
         return torch.stack(inv_tensor) # should be (3, 5, 5)
 
     def get_board_tensor(self):
-        return torch.tensor(self._board.get_board(), dtype=torch.float32) # (1, 10, 10)
+        t = torch.tensor(self._board.get_board(), dtype=torch.float32) 
+        return t.unsqueeze(0) # (1, 10, 10)
 
     # ╭────────────────────────────────────────────────╮
     # │                 training tools                 │

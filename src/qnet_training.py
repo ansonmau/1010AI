@@ -10,7 +10,7 @@ from Game.Board.Board import Board
 # ──────────────────────────────────────────────────────────────────────
 
 def main():
-    episode_count = 5
+    episode_count = 50
     board = Board(10,10)
     agent = Agent(board)
     epsilon = 1
