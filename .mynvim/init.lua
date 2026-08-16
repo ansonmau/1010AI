@@ -1,9 +1,0 @@
--- .mynvim/init.lua
--- This file is sourced automatically whenever Neovim opens in this project.
--- Use the mynvim API to read your stored values:
---
---   local m = require('mynvim')
---   local indent = m.get('indent', 2)
---   vim.opt.shiftwidth = indent
---
--- You can also set project-local keymaps, options, etc. here.

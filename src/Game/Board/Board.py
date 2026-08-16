@@ -14,7 +14,7 @@ class Board:
         self._rboard      = self._generate_board()    # raw board
         self._turn_count  = 0
         self._point_count = 0
-        self._point_diff = 0
+        self._point_diff  = 0
 
         self.utils        = BoardUtils(self)
         self.check        = ValidCheckUtils(self)
