@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from Game.Board.Board import Board
     from Game.Shape.Shape import Shape
 # ──────────────────────────────────────────────────────────────────────
-TARGET_NET_UPDATE_INTERVAL = 30
+TARGET_NET_UPDATE_INTERVAL = 500
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
 EPSILON_DECAY              = 0.995
@@ -39,11 +39,13 @@ class Agent:
         # must be after qnet
         self.optimizer = torch.optim.Adam(self._qnet.parameters(), lr=LEARNING_RATE)
 
-
+    # ╭────────────────────────────────────────────────╮
+    # │                 general tools                  │
+    # ╰────────────────────────────────────────────────╯
     def play(self, shape, pos):
         assert shape.get_id() in self._get_inv_shape_ids()
 
-        self._board.place.shape(shape, pos)
+        self._board.play_shape(shape, pos)
         # remove from inventory (replace with null shape)
         for i, s in enumerate(self._inventory):
             if shape.get_id() == s.get_id():
@@ -61,6 +63,8 @@ class Agent:
         for i,n in enumerate(inv):
             print(f"{i}: {n}")
 
+    def get_points(self):
+        return self._board.get_point_count()
 
     def _fill_inventory(self):
         for i in range(self.inventory_size):
@@ -91,8 +95,8 @@ class Agent:
         self._step_count += 1
         return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index)}
     
-    def update_target_net(self):
-        if self._step_count % TARGET_NET_UPDATE_INTERVAL == 0:
+    def update_target_net(self, update_interval = TARGET_NET_UPDATE_INTERVAL):
+        if self._step_count % update_interval == 0:
             assert self._qnet is not None
             assert self._target_network is not None
 
@@ -115,9 +119,9 @@ class Agent:
         reward = 0
 
         factors = {
-                # points = (100 + 200*(total_cleared-1))
-                "points gained": self._board.get_point_diff(),
+                "points gained": 50 * self._board.get_point_diff(), # points = (100 + 200*(total_cleared-1))
                 "loss penalty": 0 if self._can_play() else -200,
+                "survival": 10 * self._board.get_turn_count(), 
                 }
         
         for v in factors.values():
