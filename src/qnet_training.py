@@ -77,7 +77,7 @@ class TTAI:
         curr_ep["steps"] += 1
         curr_ep["last_reward"] = reward
         curr_ep["total_reward"] += reward
-        curr_ep["board_fill_ratio"] = self.agent._board.get_filled_ratio() 
+        curr_ep["board_fill_ratio"] = self.agent._board.utils.get_filled_ratio()
 
     def _update_session_stats(self):
         curr_ep = self.stats["current_episode"]

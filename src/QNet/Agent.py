@@ -120,12 +120,11 @@ class Agent:
         reward = 0
         b = self._board
 
-
         # points = (100 + 200*(total_cleared-1))
         factors = {
                 "loss penalty":             -300 if not self._can_play() else 0,
                 "points gained":            b.get_point_diff(), 
-                "filling up space penalty": -(10 * b.get_filled_ratio()),
+                "filling up space penalty": -(10 * b.utils.get_filled_ratio()),
                 # placing a block that fills a line?
                 }
         
