@@ -48,5 +48,18 @@ class BoardUtils:
         return round(filled_positions / total_positions, 2)
 
 
+    def calc_progress_score(self):
+        blocks_pos = self._board.utils.get_shape_block_positions(shape, pos)
+        rows = []
+        cols = []
 
+        # get unique rows and cols
+        for row, col in blocks_pos:
+            if row not in rows:
+                rows.append(row)
+            if col not in cols:
+                cols.append(col)
 
+        b = self._board.get_board()
+        for row in rows:
+            old_fill_count = sum(1 for x in b[row] if x != 0)

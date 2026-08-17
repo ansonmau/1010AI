@@ -72,6 +72,12 @@ class Board:
         assert col < self._ncols
 
         return self._rboard[row][col]
+    
+    def get_row(self, row_num):
+        return self._rboard[row_num]
+
+    def get_col(self, col_num):
+        return [row[col_num] for row in self._rboard]
 
     def set(self, pos):
         row,col = pos
