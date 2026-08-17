@@ -91,7 +91,7 @@ class Agent:
         # get updated info
         obs      = self._observe_gamestate()
         can_play = self._can_play()
-        reward   = self._calc_reward()
+        reward   = self._calc_reward(s, pos)
 
         self._step_count += 1
         return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index)}
@@ -116,7 +116,7 @@ class Agent:
                 return True
         return False
 
-    def _calc_reward(self):
+    def _calc_reward(self, shape: "Shape", pos):
         reward = 0
         b = self._board
 
@@ -124,12 +124,38 @@ class Agent:
         factors = {
                 "loss penalty":             -300 if not self._can_play() else 0,
                 "points gained":            b.get_point_diff(), 
-                "filling up space penalty": -(10 * b.utils.get_filled_ratio()),
-                # placing a block that fills a line?
+                # "filling up space penalty": -(10 * b.utils.get_filled_ratio()),
+                "line progress": self._calc_line_progress_reward(shape, pos),
                 }
         
         for v in factors.values():
             reward += int(v)
+
+        return reward
+    
+    def _calc_line_progress_reward(self, shape, pos):
+        reward = 0
+
+        block_positions = self._board.utils.get_shape_block_positions(shape, pos)
+        
+        rows = [x[0] for x in block_positions]
+        cols = [x[1] for x in block_positions]
+        
+        b = self._board
+        for c_row in set(rows):
+            # add one for each block
+            filled = sum(1 for x in b.get_row(c_row) if x==True)
+            # subtract blocks from the piece
+            old_filled = filled - rows.count(c_row)
+            diff = filled - old_filled
+            reward += diff
+        for c_col in set(cols):
+            # add one for each block
+            filled = sum(1 for x in b.get_col(c_col) if x==True)
+            # subtract blocks from piece
+            old_filled = filled - cols.count(c_col)
+            diff = filled - old_filled
+            reward += diff
 
         return reward
 
