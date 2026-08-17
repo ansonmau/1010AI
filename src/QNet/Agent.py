@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 TARGET_NET_UPDATE_INTERVAL = 500
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
-EPSILON_DECAY              = 0.998
+EPSILON_DECAY              = 0.995
 # optimizer settings
 LEARNING_RATE              = 0.001
 EXP_SIZE                   = 50000
