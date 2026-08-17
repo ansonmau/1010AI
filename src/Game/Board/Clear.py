@@ -50,6 +50,24 @@ class ClearUtils:
                         points = 0
 
                 return points, rowsCleared, colsCleared
+
+        def progress(self, shape, pos):
+            blocks_pos = self._board.utils.get_shape_block_positions(shape, pos)
+            rows = []
+            cols = []
+
+            for row, col in blocks_pos:
+                if row not in rows:
+                    rows.append(row)
+                if col not in cols:
+                    cols.append(col)
+
+            b = self._board.get_board()
+            for row in rows:
+                old_fill_count = sum(1 for x in b[row] if x != 0)
+                new_fill_count = 
+
+
         
         def clear_col(self, col):
                 for i in range(self._nrows):

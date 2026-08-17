@@ -16,7 +16,6 @@ class Board:
         self._turn_count  = 0
         self._point_count = 0
         self._point_diff  = 0
-        self._filled      = 0
 
         self.utils = BoardUtils(self)
         self.check = ValidCheckUtils(self)
@@ -41,7 +40,6 @@ class Board:
         self._point_diff   = pts_gained
         self._turn_count  += 1
         self._point_count += pts_gained
-        self._filled      += shape.get_volume()
 
         return 0
 
@@ -61,8 +59,11 @@ class Board:
     def get_board(self):
         return self._rboard
 
-    def get_filled_ratio(self):
-        return round(self._filled / self._rsize, 2)
+    def dupe(self):
+        new_board = Board(self._nrows, self._ncols)
+        new_board._rboard = self._rboard.copy()
+
+        return new_board
 
     def get(self, pos):
         row,col = pos
@@ -83,7 +84,6 @@ class Board:
     def reset(self):
         self._rboard      = self._generate_board()
         self._point_count = 0
-        self._filled      = 0
         self._point_diff  = 0
         self._turn_count  = 0
 

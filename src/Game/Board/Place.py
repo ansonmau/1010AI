@@ -19,3 +19,8 @@ class PlaceUtils:
         else:
             return 1
 
+    def phantom_place(self, shape, pos):
+        temp_board = self._board.dupe()
+        temp_board.play_shape(shape, pos)
+
+

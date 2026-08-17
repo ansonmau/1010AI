@@ -33,12 +33,20 @@ class BoardUtils:
         
         return positions
 
-    def get_fill_ratio(self):
+    def get_filled_ratio(self):
         """
         returns ratio of how much of the board is used
         """
         n_rows, n_cols = self._board.get_size()
+
         total_positions = n_rows * n_cols
+        filled_positions = 0
+
+        for row in self._board.get_board():
+            filled_positions += sum(1 for x in row if x != 0)
+        
+        return round(filled_positions / total_positions, 2)
+
 
 
 
