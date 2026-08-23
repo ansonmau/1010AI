@@ -122,9 +122,9 @@ class Agent:
 
         # points = (100 + 200*(total_cleared-1))
         factors = {
-                "loss penalty":             -300 if not self._can_play() else 0,
-                "points gained":            b.get_point_diff(), 
-                # "filling up space penalty": -(10 * b.utils.get_filled_ratio()),
+                "loss penalty":  -300 if not self._can_play() else 0,
+                "fill penalty":  -(10 * b.utils.get_filled_ratio()),
+                "points gained": b.get_point_diff(),
                 "line progress": self._calc_line_progress_reward(shape, pos),
                 }
         
@@ -141,21 +141,26 @@ class Agent:
         rows = [x[0] for x in block_positions]
         cols = [x[1] for x in block_positions]
         
+        """
+        Idea:
+            Reward more if the move got closer to making a line
+        Calc:
+            Get how many blocks it added to a specific row/col
+            Multiply how many blocks it placed in that row/col by how many there were before
+        """
         b = self._board
         for c_row in set(rows):
-            # add one for each block
-            filled = sum(1 for x in b.get_row(c_row) if x==True)
-            # subtract blocks from the piece
-            old_filled = filled - rows.count(c_row)
-            diff = filled - old_filled
-            reward += diff
+            after = sum(1 for x in b.get_row(c_row) if x==True)
+            if after == 0:
+                continue # completed the line
+            before = after - rows.count(c_row)
+            reward += before * rows.count(c_row)
         for c_col in set(cols):
-            # add one for each block
-            filled = sum(1 for x in b.get_col(c_col) if x==True)
-            # subtract blocks from piece
-            old_filled = filled - cols.count(c_col)
-            diff = filled - old_filled
-            reward += diff
+            after = sum(1 for x in b.get_col(c_col) if x==True)
+            if after == 0:
+                continue
+            before = after - cols.count(c_col)
+            reward += before * cols.count(c_col)
 
         return reward
 
