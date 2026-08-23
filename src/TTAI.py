@@ -1,4 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────
+from collections import deque
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
@@ -8,6 +9,9 @@ import torch
 from QNet.Agent import Agent, EPSILON_DECAY, EPSILON_MIN
 from Game.Board.Board import Board
 # ──────────────────────────────────────────────────────────────────────
+
+AVERAGES_WINDOW_SIZE = 100
+
 class TTAI:
     def __init__(self):
         self.board = Board(10,10)
@@ -17,27 +21,30 @@ class TTAI:
         self.epsilon        = 1
         self.batch_size     = 64
 
+        self.moving_log = deque(maxlen=AVERAGES_WINDOW_SIZE)
+
         self.stats = {
                 "current_episode": {
-                    "points":               0,
-                    "last_reward":          0,
-                    "total_reward":         0,
-                    "steps":                0,
-                    "board_fill_ratio":     0,
+                    "points":                0,
+                    "last_reward":           0,
+                    "total_reward":          0,
+                    "average_single_reward": 0,
+                    "steps":                 0,
+                    "board_fill_ratio":      0,
                     },
-                "current_session":          {
-                    "episode_count":        0,
-                    "total_steps":          0,
-                    "total_reward":         0,
-                    "high_score":           0,
-                    "high_reward":          0,
-                    "high_score_episode":   0,
-                    "high_reward_episode":  0,
-                    "high_steps":           0,
-                    "high_steps_episode":   0,
-                    "average_steps":        0,
-                    "average_total_reward": 0,
-                    "epsilon":              float(0),
+                "current_session": {
+                    "episode_count":         0,
+                    "total_steps":           0,
+                    "total_reward":          0,
+                    "high_score":            0,
+                    "high_reward":           0,
+                    "high_score_episode":    0,
+                    "high_reward_episode":   0,
+                    "high_steps":            0,
+                    "high_steps_episode":    0,
+                    "average_steps":         0,
+                    "average_total_reward":  0,
+                    "epsilon":               float(0),
                     },
                 }
 
@@ -90,6 +97,9 @@ class TTAI:
         curr_sesh["episode_count"] += 1
         curr_sesh["epsilon"]        = round(self.epsilon, 5)
 
+        self.moving_log.append(curr_ep.copy())
+
+
         # ── High ─────────────────────────────────────────────────────────────
         # score
         if curr_ep["points"] > curr_sesh["high_score"]:
@@ -107,29 +117,30 @@ class TTAI:
             curr_sesh["high_steps_episode"] = curr_sesh["episode_count"]
 
         # ── Avgs ──────────────────────────────────────────────────────────────
-        # steps
-        curr_sesh["average_steps"] = int(curr_sesh["total_steps"] / curr_sesh["episode_count"])
+        log_size = len(self.moving_log)
 
-        # reward - total
-        curr_sesh["average_total_reward"] = int(curr_sesh["total_reward"] / curr_sesh["episode_count"])
+        avg_steps = sum(ep["steps"] for ep in self.moving_log) / log_size
+        avg_tReward = sum(ep["total_reward"] for ep in self.moving_log) / log_size
 
-
+        curr_sesh["average_steps"] = round(avg_steps, 2)
+        curr_sesh["average_total_reward"] = round(avg_tReward, 2)
 
     def _print_stats(self):
+        print("=" * 30)
         curr_ep = self.stats["current_episode"]
         curr_sesh = self.stats["current_session"]
 
-        print("-- Session -----")
+        print("-- Session Stats -----")
         for key in curr_sesh:
             print(f"{key}: {curr_sesh[key]}")
 
-        print("-- Episode -----")
+        print("-- Episode Stats -----")
         for key in curr_ep:
             print(f"{key}: {curr_ep[key]}")
 
+        print("-- Board -----")
         self.agent.print_state()
 
-        print("=" * 15)
 
 def main():
     t = TTAI()
