@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from Game.Board.Board import Board
     from Game.Shape.Shape import Shape
 # ──────────────────────────────────────────────────────────────────────
-TARGET_NET_UPDATE_INTERVAL = 500
+TARGET_NET_UPDATE_INTERVAL = 1000
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
 EPSILON_DECAY              = 0.995
