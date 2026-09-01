@@ -1,13 +1,15 @@
 import enum
-from QNet.ExperienceReplay import ExperienceReplay
+from QNet.ExperienceReplay  import ExperienceReplay
 from QNet.GlobalActionIndex import GlobalActionIndex
 from QNet.Qnet              import QNet
-from Game.Shape.Shape import Shape
+from Game.Shape.Shape       import Shape
+from QNet.Reward            import RewardCalculator
 # ──────────────────────────────────────────────────────────────────────
 import torch
 import random
 # ──────────────────────────────────────────────────────────────────────
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from Game.Board.Board import Board
     from Game.Shape.Shape import Shape
@@ -22,23 +24,25 @@ EXP_SIZE                   = 50000
 
 class Agent:                
     def __init__(self, board: "Board"):
-        self.gai             = GlobalActionIndex()
-        self.exp             = ExperienceReplay(EXP_SIZE)
+        self._board             = board
+        self._step_count        = 0
 
-        self._board          = board
-        self._step_count     = 0
-
-        self.inventory_size  = 3
-        self._inventory      = [Shape(0) for _ in range(self.inventory_size)]
-        self._curr_inv_size = 3
+        self.inventory_size     = 3
+        self._inventory         = [Shape(0) for _ in range(self.inventory_size)]
+        self._curr_inv_size     = 3
         self._fill_inventory()
 
+        self.gai                = GlobalActionIndex()
+        self.exp                = ExperienceReplay(EXP_SIZE)
+        self._reward_calculator = RewardCalculator(board)
+
+
         # must be after instantiating variables
-        self._qnet           = QNet(self)
-        self._target_network = QNet(self)
+        self._qnet              = QNet(self)
+        self._target_network    = QNet(self)
 
         # must be after qnet
-        self.optimizer = torch.optim.Adam(self._qnet.parameters(), lr=LEARNING_RATE)
+        self.optimizer          = torch.optim.Adam(self._qnet.parameters(), lr=LEARNING_RATE)
 
     # ╭────────────────────────────────────────────────╮
     # │                 general tools                  │
@@ -87,13 +91,15 @@ class Agent:
         pos = (row,col)
 
         self.play(s, pos)
+        self._reward_calculator.set_last_move(s, pos, self._can_play())
 
         # get updated info
         obs      = self._observe_gamestate()
         can_play = self._can_play()
-        reward   = self._calc_reward(s, pos)
+        reward   = self._reward_calculator.calc()
 
         self._step_count += 1
+
         return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index)}
     
     def update_target_net(self, update_interval = TARGET_NET_UPDATE_INTERVAL):
@@ -115,55 +121,10 @@ class Agent:
             if len(self._board.check.get_all_valid_positions(shape)) > 0:
                 return True
         return False
-
-    def _calc_reward(self, shape: "Shape", pos):
-        reward = 0
-        b = self._board
-
-        # points = (100 + 200*(total_cleared-1))
-        factors = {
-                "loss penalty":  -300 if not self._can_play() else 0,
-                "fill penalty":  -(10 * b.utils.get_filled_ratio()),
-                "points gained": b.get_point_diff(),
-                "line progress": self._calc_line_progress_reward(shape, pos),
-                }
-        
-        for v in factors.values():
-            reward += int(v)
-
-        return reward
     
-    def _calc_line_progress_reward(self, shape, pos):
-        reward = 0
-
-        block_positions = self._board.utils.get_shape_block_positions(shape, pos)
-        
-        rows = [x[0] for x in block_positions]
-        cols = [x[1] for x in block_positions]
-        
-        """
-        Idea:
-            Reward more if the move got closer to making a line
-        Calc:
-            Get how many blocks it added to a specific row/col
-            Multiply how many blocks it placed in that row/col by how many there were before
-        """
-        b = self._board
-        for c_row in set(rows):
-            after = sum(1 for x in b.get_row(c_row) if x==True)
-            if after == 0:
-                continue # completed the line
-            before = after - rows.count(c_row)
-            reward += before * rows.count(c_row)
-        for c_col in set(cols):
-            after = sum(1 for x in b.get_col(c_col) if x==True)
-            if after == 0:
-                continue
-            before = after - cols.count(c_col)
-            reward += before * cols.count(c_col)
-
-        return reward
-
+    # ╭────────────────────────────────────────────────╮
+    # │                  Reward calcs                  │
+    # ╰────────────────────────────────────────────────╯
     # ╭────────────────────────────────────────────────╮
     # │                   gai tools                    │
     # ╰────────────────────────────────────────────────╯

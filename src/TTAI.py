@@ -17,31 +17,31 @@ class TTAI:
         self.board = Board(10,10)
         self.agent = Agent(self.board)
 
-        self.episode_count  = 1000
-        self.epsilon        = 1
-        self.batch_size     = 64
-
-        self.moving_log = deque(maxlen=AVERAGES_WINDOW_SIZE)
+        self.episode_count = 10000
+        self.epsilon       = 1
+        self.batch_size    = 128
+        self.greedy_freq   = 100
+        self.moving_log    = deque(maxlen=AVERAGES_WINDOW_SIZE)
 
         self.stats = {
-                "current_episode": {
+                "current_episode":           {
                     "points":                0,
                     "last_reward":           0,
                     "total_reward":          0,
-                    "average_single_reward": 0,
                     "steps":                 0,
                     "board_fill_ratio":      0,
                     },
-                "current_session": {
+                "current_session":           {
                     "episode_count":         0,
                     "total_steps":           0,
-                    "total_reward":          0,
+                    # "total_reward":          0,
                     "high_score":            0,
                     "high_reward":           0,
+                    "high_steps":            0,
                     "high_score_episode":    0,
                     "high_reward_episode":   0,
-                    "high_steps":            0,
                     "high_steps_episode":    0,
+                    "average_sample_size":   AVERAGES_WINDOW_SIZE,
                     "average_steps":         0,
                     "average_total_reward":  0,
                     "epsilon":               float(0),
@@ -51,15 +51,20 @@ class TTAI:
     def run(self):
         for curr_episode in range(self.episode_count):
             self.agent.reset()
-            self.agent.print_state()
+            self._print_stats()
+
+            check = ( curr_episode % self.greedy_freq == 0 )
+            cEps = 0 if check else self.epsilon
+
+            dbg_check = cEps == 0 and curr_episode > 300 # for conditional breakpoint 
 
             while self.agent._can_play():
                 state = self.agent._observe_gamestate()
-                move = self.agent.choose_move(self.epsilon)
+                move = self.agent.choose_move(cEps)
                 next_state, reward, can_play, info = self.agent.step(move)
                 self.agent.exp.save(state, move, reward, next_state, can_play)
                 self.agent.training_step(self.batch_size)
-                self.agent.update_target_net(800) # default 500
+                self.agent.update_target_net() 
 
                 self._update_episode_stats(reward)
                 self._print_stats()
@@ -82,18 +87,18 @@ class TTAI:
     def _update_episode_stats(self, reward):
         curr_ep = self.stats["current_episode"]
 
-        curr_ep["points"] = self.agent.get_points()
-        curr_ep["steps"] += 1
-        curr_ep["last_reward"] = reward
-        curr_ep["total_reward"] += reward
-        curr_ep["board_fill_ratio"] = self.agent._board.utils.get_filled_ratio()
+        curr_ep["points"]            = self.agent.get_points()
+        curr_ep["steps"]            += 1
+        curr_ep["last_reward"]       = reward
+        curr_ep["total_reward"]     += reward
+        curr_ep["board_fill_ratio"]  = self.agent._board.utils.get_filled_ratio()
 
     def _update_session_stats(self):
         curr_ep = self.stats["current_episode"]
         curr_sesh = self.stats["current_session"]
 
         curr_sesh["total_steps"]   += curr_ep["steps"]
-        curr_sesh["total_reward"]  += curr_ep["total_reward"]
+        # curr_sesh["total_reward"]  += curr_ep["total_reward"]
         curr_sesh["episode_count"] += 1
         curr_sesh["epsilon"]        = round(self.epsilon, 5)
 
@@ -132,11 +137,15 @@ class TTAI:
 
         print("-- Session Stats -----")
         for key in curr_sesh:
-            print(f"{key}: {curr_sesh[key]}")
+            if isinstance(curr_sesh[key], float):
+                print("{:25}\t{:.2f}".format(key, curr_sesh[key]))
+            else:
+                print("{:25}\t{}".format(key, curr_sesh[key]))
+
 
         print("-- Episode Stats -----")
         for key in curr_ep:
-            print(f"{key}: {curr_ep[key]}")
+            print("{:25}\t{:.2f}".format(key, curr_ep[key]))
 
         print("-- Board -----")
         self.agent.print_state()
