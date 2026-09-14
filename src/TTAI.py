@@ -43,7 +43,6 @@ class TTAI:
             self.st.update(outer_stat_data)
 
             while self.agent._can_play():
-
                 # ── agent loop ────────────────────────────────────────────────────────
                 state = self.agent._observe_gamestate()
                 move = self.agent.choose_move(cEps)
