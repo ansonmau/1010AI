@@ -13,6 +13,7 @@ class Board:
         self._rsize = nrows * ncols
 
         self._rboard      = self._generate_board()    # raw board
+        self._prev_board  = self._generate_board()
         self._turn_count  = 0
         self._point_count = 0
         self._point_diff  = 0
@@ -23,6 +24,8 @@ class Board:
         self.place = PlaceUtils(self)
 
     def play_shape(self, shape: Shape, pos):
+        self._prev_board = self._rboard.copy()
+
         err = self.place.shape(shape, pos)
         if err:
             print("Failed to place shape. Wrong area?")
@@ -58,6 +61,9 @@ class Board:
 
     def get_board(self):
         return self._rboard
+
+    def get_prev_board(self):
+        return self._prev_board
 
     def dupe(self):
         new_board = Board(self._nrows, self._ncols)
