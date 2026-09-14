@@ -3,8 +3,8 @@ from collections import deque
 
 class ExperienceReplay:
     def __init__(self, replay_size):
-        self._buffer = deque(maxlen=replay_size)
-        self._size = replay_size
+        self._buffer     = deque(maxlen=replay_size)
+        self._size       = replay_size
 
     def save(self, state, action, reward, next_state, can_play):
         self._buffer.append((state, action, reward, next_state, can_play))
@@ -20,3 +20,6 @@ class ExperienceReplay:
 
     def get_size(self):
         return len(self._buffer)
+
+    def get_last_exp(self):
+        return self._buffer[-1]
