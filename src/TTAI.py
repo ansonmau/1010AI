@@ -1,6 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────
 from collections import deque
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     pass
 # ──────────────────────────────────────────────────────────────────────
@@ -8,6 +9,7 @@ import random
 import torch 
 from QNet.Agent import Agent, EPSILON_DECAY, EPSILON_MIN
 from Game.Board.Board import Board
+from Ui.stats import StatTrak
 # ──────────────────────────────────────────────────────────────────────
 
 AVERAGES_WINDOW_SIZE = 100
@@ -17,48 +19,32 @@ class TTAI:
         self.board = Board(10,10)
         self.agent = Agent(self.board)
 
+        # self.agent._reward_calculator.enable_print_rewards()
+
         self.episode_count = 10000
         self.epsilon       = 1
         self.batch_size    = 128
         self.greedy_freq   = 100
-        self.moving_log    = deque(maxlen=AVERAGES_WINDOW_SIZE)
+        self.st            = StatTrak(self.episode_count, AVERAGES_WINDOW_SIZE)
 
-        self.stats = {
-                "current_episode":           {
-                    "points":                0,
-                    "last_reward":           0,
-                    "total_reward":          0,
-                    "steps":                 0,
-                    "board_fill_ratio":      0,
-                    },
-                "current_session":           {
-                    "episode_count":         0,
-                    "total_steps":           0,
-                    # "total_reward":          0,
-                    "high_score":            0,
-                    "high_reward":           0,
-                    "high_steps":            0,
-                    "high_score_episode":    0,
-                    "high_reward_episode":   0,
-                    "high_steps_episode":    0,
-                    "average_sample_size":   AVERAGES_WINDOW_SIZE,
-                    "average_steps":         0,
-                    "average_total_reward":  0,
-                    "epsilon":               float(0),
-                    },
-                }
 
     def run(self):
         for curr_episode in range(self.episode_count):
             self.agent.reset()
-            self._print_stats()
+            self.st.new_episode()
 
-            check = ( curr_episode % self.greedy_freq == 0 )
-            cEps = 0 if check else self.epsilon
+            greedy = (curr_episode % self.greedy_freq == 0)
+            cEps = 0 if greedy else self.epsilon
 
-            dbg_check = cEps == 0 and curr_episode > 300 # for conditional breakpoint 
+            outer_stat_data = {
+                    "type": "session",
+                    "epsilon": cEps,
+                    }
+            self.st.update(outer_stat_data)
 
             while self.agent._can_play():
+
+                # ── agent loop ────────────────────────────────────────────────────────
                 state = self.agent._observe_gamestate()
                 move = self.agent.choose_move(cEps)
                 next_state, reward, can_play, info = self.agent.step(move)
@@ -66,89 +52,23 @@ class TTAI:
                 self.agent.training_step(self.batch_size)
                 self.agent.update_target_net() 
 
-                self._update_episode_stats(reward)
-                self._print_stats()
+                # ── update stats ──────────────────────────────────────────────────────
+                inner_stat_data = {
+                        "type":             "episode",
+                        "reward":           reward,
+                        "can_play":         can_play,
+                        "move":             move,
+                        "board_fill_ratio": self.board.utils.get_filled_ratio(),
+                        "points":           self.board.get_point_diff(),
+                        "loss":             info["loss"],
+                        }
+                self.st.update(inner_stat_data)
+
+                # ── display ───────────────────────────────────────────────────────────
+                print(self.st.get_str())
+                self.agent.print_state()
 
             self.epsilon = max(EPSILON_MIN, self.epsilon * EPSILON_DECAY)
-
-            self._update_session_stats()
-            self._reset_episode_stats()
-
-    # ╭────────────────────────────────────────────────╮
-    # │                    helpers                     │
-    # ╰────────────────────────────────────────────────╯
-
-    def _reset_episode_stats(self):
-        curr_ep = self.stats["current_episode"]
-
-        for key in curr_ep:
-            curr_ep[key] = 0
-
-    def _update_episode_stats(self, reward):
-        curr_ep = self.stats["current_episode"]
-
-        curr_ep["points"]            = self.agent.get_points()
-        curr_ep["steps"]            += 1
-        curr_ep["last_reward"]       = reward
-        curr_ep["total_reward"]     += reward
-        curr_ep["board_fill_ratio"]  = self.agent._board.utils.get_filled_ratio()
-
-    def _update_session_stats(self):
-        curr_ep = self.stats["current_episode"]
-        curr_sesh = self.stats["current_session"]
-
-        curr_sesh["total_steps"]   += curr_ep["steps"]
-        # curr_sesh["total_reward"]  += curr_ep["total_reward"]
-        curr_sesh["episode_count"] += 1
-        curr_sesh["epsilon"]        = round(self.epsilon, 5)
-
-        self.moving_log.append(curr_ep.copy())
-
-
-        # ── High ─────────────────────────────────────────────────────────────
-        # score
-        if curr_ep["points"] > curr_sesh["high_score"]:
-            curr_sesh["high_score"] = curr_ep["points"]
-            curr_sesh["high_score_episode"] = curr_sesh["episode_count"]
-
-        # reward
-        if curr_ep["total_reward"] > curr_sesh["high_reward"]:
-            curr_sesh["high_reward"] = curr_ep["total_reward"]
-            curr_sesh["high_reward_episode"] = curr_sesh["episode_count"]
-
-        # steps
-        if curr_ep["steps"] > curr_sesh["high_steps"]:
-            curr_sesh["high_steps"] = curr_ep["steps"]
-            curr_sesh["high_steps_episode"] = curr_sesh["episode_count"]
-
-        # ── Avgs ──────────────────────────────────────────────────────────────
-        log_size = len(self.moving_log)
-
-        avg_steps = sum(ep["steps"] for ep in self.moving_log) / log_size
-        avg_tReward = sum(ep["total_reward"] for ep in self.moving_log) / log_size
-
-        curr_sesh["average_steps"] = round(avg_steps, 2)
-        curr_sesh["average_total_reward"] = round(avg_tReward, 2)
-
-    def _print_stats(self):
-        print("=" * 30)
-        curr_ep = self.stats["current_episode"]
-        curr_sesh = self.stats["current_session"]
-
-        print("-- Session Stats -----")
-        for key in curr_sesh:
-            if isinstance(curr_sesh[key], float):
-                print("{:25}\t{:.2f}".format(key, curr_sesh[key]))
-            else:
-                print("{:25}\t{}".format(key, curr_sesh[key]))
-
-
-        print("-- Episode Stats -----")
-        for key in curr_ep:
-            print("{:25}\t{:.2f}".format(key, curr_ep[key]))
-
-        print("-- Board -----")
-        self.agent.print_state()
 
 
 def main():
