@@ -26,6 +26,7 @@ class Agent:
     def __init__(self, board: "Board"):
         self._board             = board
         self._step_count        = 0
+        self._last_loss_val     = 0
 
         self.inventory_size     = 3
         self._inventory         = [Shape(0) for _ in range(self.inventory_size)]
@@ -35,6 +36,7 @@ class Agent:
         self.gai                = GlobalActionIndex()
         self.exp                = ExperienceReplay(EXP_SIZE)
         self._reward_calculator = RewardCalculator(board)
+        # self._reward_calculator.enable_print_rewards()
 
 
         # must be after instantiating variables
@@ -44,6 +46,7 @@ class Agent:
         # must be after qnet
         self.optimizer          = torch.optim.Adam(self._qnet.parameters(), lr=LEARNING_RATE)
 
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                 general tools                  │
     # ╰────────────────────────────────────────────────╯
@@ -51,11 +54,13 @@ class Agent:
         assert shape.get_id() in self._get_inv_shape_ids()
 
         self._board.play_shape(shape, pos)
+
         # remove from inventory (replace with null shape)
         for i, s in enumerate(self._inventory):
             if shape.get_id() == s.get_id():
                 self._inventory[i] = Shape.get_null_shape()
                 self._curr_inv_size -= 1
+                break
         
         # fill inventory if empty
         if self._curr_inv_size <= 0:
@@ -75,6 +80,7 @@ class Agent:
         for i in range(self.inventory_size):
             self._inventory[i] = Shape.get_random_shape()
 
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                 qnet env tools                 │
     # ╰────────────────────────────────────────────────╯
@@ -91,7 +97,11 @@ class Agent:
         pos = (row,col)
 
         self.play(s, pos)
-        self._reward_calculator.set_last_move(s, pos, self._can_play())
+
+        self._reward_calculator.update({
+            "last_move": (s,pos),
+            "can_play": self._can_play(),
+            })
 
         # get updated info
         obs      = self._observe_gamestate()
@@ -100,7 +110,7 @@ class Agent:
 
         self._step_count += 1
 
-        return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index)}
+        return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index), "loss": self._last_loss_val}
     
     def update_target_net(self, update_interval = TARGET_NET_UPDATE_INTERVAL):
         if self._step_count % update_interval == 0:
@@ -110,6 +120,7 @@ class Agent:
             self._target_network.load_state_dict(self._qnet.state_dict())
 
 
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                  env helpers                   │
     # ╰────────────────────────────────────────────────╯
@@ -121,10 +132,8 @@ class Agent:
             if len(self._board.check.get_all_valid_positions(shape)) > 0:
                 return True
         return False
-    
-    # ╭────────────────────────────────────────────────╮
-    # │                  Reward calcs                  │
-    # ╰────────────────────────────────────────────────╯
+
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                   gai tools                    │
     # ╰────────────────────────────────────────────────╯
@@ -144,7 +153,7 @@ class Agent:
     def _get_inv_shape_ids(self):
         return [s.get_id() for s in self._inventory]
 
-
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                  tensor tools                  │
     # ╰────────────────────────────────────────────────╯
@@ -158,6 +167,7 @@ class Agent:
         t = torch.tensor(self._board.get_board(), dtype=torch.float32) 
         return t.unsqueeze(0) # (1, 10, 10)
 
+    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                 training tools                 │
     # ╰────────────────────────────────────────────────╯
@@ -184,8 +194,6 @@ class Agent:
             move = q_vals.argmax().item()
 
         return move
-
-
 
     def training_step(self, batch_size, discount=0.99):
         if self.exp.get_size() < batch_size:
@@ -218,7 +226,7 @@ class Agent:
         # - qvals are returned in a (32, gai_size) batch, we want values from the 1st dimension
         # - must match actions tensor to qval tensor dimensions
         all_live_qvals = self.get_qvals(b_board, b_pieces)
-        predicted_qvals = all_live_qvals.gather(1, t_actions.unsqueeze(0)).squeeze(1) # turn back into 1d list 
+        predicted_qvals = all_live_qvals.gather(1, t_actions.unsqueeze(1)).squeeze(1) # turn back into 1d list 
 
 
         # get target qvals and plug them into bellman eq to get predicted "correct" qvals
@@ -230,10 +238,12 @@ class Agent:
 
         # calc mean squared error (loss)
         loss = torch.nn.functional.mse_loss(predicted_qvals, target_qvals)
+        self._last_loss_val = loss.item()
         
         # ──────────────< backpropogate and update qnet weightings >──────────────
         self.optimizer.zero_grad() # clear history
         loss.backward()             # backpropogate
         self.optimizer.step()      # update weights
+
 
 
