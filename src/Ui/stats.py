@@ -1,0 +1,211 @@
+from collections import deque
+
+DECIMAL_CUTOFF = 2
+
+class StatTrak:
+    def __init__(self, total_episode_count, avgs_sample_size=100):
+        self._data_log = deque(maxlen=avgs_sample_size)
+
+        self.d_ai = {
+                "last reward":      0,
+                "total reward":     0,
+                "loss":             0,
+                "epsilon":          0,
+                }
+
+        self.d_game = {
+                "points":           0,
+                "turns":            0,
+                "board fill ratio": 0,
+                }
+
+        self.d_average = {
+                "turns":            float(0),
+                "final reward":     float(0),
+                "game points":      float(0),
+                "final loss":             float(0),
+                }
+
+        self.d_highscores = {
+                "turns":            (0,0),
+                "final reward":     (0,0),
+                "game points":      (0,0),
+                }
+
+        self.d_misc = {
+                "total turns":      0,
+                "episode count":    0,
+                "total episodes":   total_episode_count,
+                }
+
+    # +------------------------------------------------+
+    # |                      API                       |
+    # +------------------------------------------------+
+    def update(self, data: dict):
+        t = data.get("type")
+        if not (t and t in ["episode", "session"]):
+            raise ValueError("Missing or invalid type for stats")
+
+        if t == "episode":
+            self._update_episode(data)
+        else: # must be session
+            self._update_session(data)
+
+            log_data = {
+                    "final reward": self.d_ai["total reward"],
+                    "loss":         self.d_ai["loss"],
+                    "game points":  self.d_game["points"],
+                    "turns":        self.d_game["turns"],
+                    }
+            self._data_log.append(log_data)
+
+            self.__update_averages()
+            self.__update_highscores()
+
+        self.__round_floats() # working with floats T_T
+
+    def new_episode(self):
+        ai = self.d_ai
+        game = self.d_game
+        misc = self.d_misc
+
+        # incrementing
+        misc["episode count"] += 1
+
+        ai["last reward"]        = 0
+        ai["total reward"]       = 0
+        ai["loss"]               = 0
+        game["points"]           = 0
+        game["turns"]            = 0
+        game["board fill ratio"] = 0
+
+    # +------------------------------------------------+
+    # |                    Helpers                     |
+    # +------------------------------------------------+
+    def _update_episode(self, data):
+        ai = self.d_ai
+        game = self.d_game
+        misc = self.d_misc
+
+        """
+        - last reward
+        - total reward
+        - total steps
+        - game points
+        - board fill
+        """
+
+        # increments
+        game["turns"]       += 1
+        misc["total turns"] += 1
+        ai["total reward"]  += data["reward"]
+
+        # value setting
+        ai["last reward"]        = data["reward"]
+        ai["loss"]               = data["loss"]
+        game["points"]           = data["points"]
+        game["board fill ratio"] = data["board_fill_ratio"]
+
+
+    def _update_session(self, data):
+        """
+        This function assumes that it is being called after an episode has
+        been completed
+        """
+        ai   = self.d_ai
+        game = self.d_game
+        avgs = self.d_average
+        high = self.d_highscores
+        misc = self.d_misc
+
+        """
+        - epsilon
+        - loss
+        - averages
+        - highscores
+        - episode count
+        """
+        
+
+        # value setting
+        ai["epsilon"] = data["epsilon"]
+
+
+    def __update_averages(self):
+        ai   = self.d_ai
+        game = self.d_game
+        misc = self.d_misc
+        avgs = self.d_average
+        log  = self._data_log
+
+        def get_avg(feat):
+            avg = sum(d[feat] for d in self._data_log) / len(self._data_log)
+            return round(avg, DECIMAL_CUTOFF)
+
+        # Steps
+        avgs["turns"] = get_avg("turns")
+        # Final reward
+        avgs["final reward"] = get_avg("final reward")
+        # Game points
+        avgs["game points"] = get_avg("game points")
+        # Loss
+        avgs["final loss"] = get_avg("loss")
+
+    def __update_highscores(self):
+        ai   = self.d_ai
+        game = self.d_game
+        high = self.d_highscores
+        misc = self.d_misc
+
+        # format: (value, episode number)
+        # Steps
+        if game["turns"] > high["turns"][0]:
+            high["turns"] = (game["turns"], misc["episode count"])
+
+        # Final reward
+        if ai["total reward"] > high["final reward"][0]:
+            high["final reward"] = (ai["total reward"], misc["episode count"])
+
+        # In-game Points
+        if game["points"] > high["game points"][0]:
+            high["game points"] = (game["points"], misc["episode count"])
+
+    def __round_floats(self):
+        def round_floats(d):
+            for key in d:
+                if isinstance(d[key], float):
+                    d[key] = round(d[key], 2)
+
+        for d in [self.d_ai, self.d_game, self.d_average, self.d_highscores, self.d_misc]:
+            round_floats(d)
+
+        
+    def get_str(self):
+        final_str = []       
+
+        def gen_title(s):
+            return f"-- {s} ---------"
+        
+        def d_to_s(d):
+            s = [f"{key:18}: {d[key]}" for key in d]
+            return '\n'.join(s)
+
+        final_str.append(gen_title("AI"))
+        final_str.append(d_to_s(self.d_ai))
+
+        final_str.append(gen_title("Game"))
+        final_str.append(d_to_s(self.d_game))
+
+        final_str.append(gen_title(f"Average ({self._data_log.maxlen})"))
+        final_str.append(d_to_s(self.d_average))
+
+        final_str.append(gen_title("Highscore"))
+        final_str.append(d_to_s(self.d_highscores))
+
+        final_str.append(gen_title("Misc"))
+        final_str.append(d_to_s(self.d_misc))
+
+        return '\n'.join(final_str)
+
+    
+
