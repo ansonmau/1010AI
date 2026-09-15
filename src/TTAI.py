@@ -36,11 +36,11 @@ class TTAI:
             greedy = (curr_episode % self.greedy_freq == 0)
             cEps = 0 if greedy else self.epsilon
 
-            outer_stat_data = {
+            sesh_data = {
                     "type": "session",
                     "epsilon": cEps,
                     }
-            self.st.update(outer_stat_data)
+            self.st.update(sesh_data)
 
             while self.agent._can_play():
                 # ── agent loop ────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ class TTAI:
                 self.agent.update_target_net() 
 
                 # ── update stats ──────────────────────────────────────────────────────
-                inner_stat_data = {
+                ep_data = {
                         "type":             "episode",
                         "reward":           reward,
                         "can_play":         can_play,
@@ -61,7 +61,7 @@ class TTAI:
                         "points":           self.board.get_point_diff(),
                         "loss":             info["loss"],
                         }
-                self.st.update(inner_stat_data)
+                self.st.update(ep_data)
 
                 # ── display ───────────────────────────────────────────────────────────
                 print(self.st.get_str())
