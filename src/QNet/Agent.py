@@ -14,10 +14,14 @@ if TYPE_CHECKING:
     from Game.Board.Board import Board
     from Game.Shape.Shape import Shape
 # ──────────────────────────────────────────────────────────────────────
+
+
 TARGET_NET_UPDATE_INTERVAL = 1000
+
 # exploitation vs exploration
 EPSILON_MIN                = 0.05
 EPSILON_DECAY              = 0.995
+
 # optimizer settings
 LEARNING_RATE              = 0.001
 EXP_SIZE                   = 50000
@@ -48,7 +52,7 @@ class Agent:
 
     # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
-    # │                 general tools                  │
+    # │                 game tools                     │
     # ╰────────────────────────────────────────────────╯
     def play(self, shape, pos):
         assert shape.get_id() in self._get_inv_shape_ids()
@@ -79,6 +83,7 @@ class Agent:
     def _fill_inventory(self):
         for i in range(self.inventory_size):
             self._inventory[i] = Shape.get_random_shape()
+
 
     # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
@@ -120,7 +125,6 @@ class Agent:
             self._target_network.load_state_dict(self._qnet.state_dict())
 
 
-    # ──────────────────────────────────────────────────────────────────────
     # ╭────────────────────────────────────────────────╮
     # │                  env helpers                   │
     # ╰────────────────────────────────────────────────╯

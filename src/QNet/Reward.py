@@ -103,7 +103,8 @@ class RewardCalculator:
 
             cReward += connected_blocks(r, piece_on_row[1])
             if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
-                cReward += nBlk
+                diff = nBlk - NUM_BLOCKS_CLOSE_TO_FILLING
+                cReward += diff
 
             max_row_reward = max(max_row_reward, cReward)
 
@@ -119,6 +120,7 @@ class RewardCalculator:
             max_col_reward = max(max_col_reward, cReward)
 
             if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
+                diff = nBlk - NUM_BLOCKS_CLOSE_TO_FILLING
                 reward += nBlk
 
         if self._print_rewards:

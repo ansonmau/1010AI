@@ -10,7 +10,7 @@ class StatTrak:
         self.d_ai = {
                 "last reward":      0,
                 "total reward":     0,
-                "loss":             float(0),
+                "avg loss":             float(0),
                 "epsilon":          0,
                 }
 
@@ -62,7 +62,7 @@ class StatTrak:
         # ── log relevant data ─────────────────────────────────────────────
         log_data = {
                 "final reward": self.d_ai["total reward"],
-                "loss":         self.d_ai["loss"],
+                "avg loss":         self.d_ai["avg loss"],
                 "game points":  self.d_game["points"],
                 "turns":        self.d_game["turns"],
                 }
@@ -78,7 +78,7 @@ class StatTrak:
 
         ai["last reward"]        = 0
         ai["total reward"]       = 0
-        ai["loss"]               = 0
+        ai["avg loss"]               = 0
         game["points"]           = 0
         game["turns"]            = 0
         game["board fill ratio"] = 0
@@ -86,7 +86,7 @@ class StatTrak:
 
 
     # +------------------------------------------------+
-    # |                    Helpers                     |
+    # |                 Update Helpers                 |
     # +------------------------------------------------+
     def _update_episode(self, data):
         ai = self.d_ai
@@ -100,19 +100,19 @@ class StatTrak:
         - board fill
         """
 
-        # increments
-        game["turns"]       += 1
-        misc["total turns"] += 1
-        ai["total reward"]  += data["reward"]
+        # game
+        game["board fill ratio"]  = data["board_fill_ratio"]
+        game["points"]           += data["points"]
+        game["turns"]            += 1
+        misc["total turns"]      += 1
 
-        # value setting
-        ai["last reward"]        = data["reward"]
-        game["points"]           = data["points"]
-        game["board fill ratio"] = data["board_fill_ratio"]
+        # ai
+        ai["last reward"]         = data["reward"]
+        ai["total reward"]       += data["reward"]
 
         # loss
         self._loss_log.append(data["loss"])
-        ai["loss"] = sum(self._loss_log) / len(self._loss_log)
+        ai["avg loss"] = sum(self._loss_log) / len(self._loss_log)
 
 
     def _update_session(self, data):
@@ -151,7 +151,7 @@ class StatTrak:
         # Game points
         avgs["game points"] = get_avg("game points")
         # Loss
-        avgs["final loss"] = get_avg("loss")
+        avgs["loss"] = get_avg("avg loss")
 
     def __update_highscores(self):
         ai   = self.d_ai
