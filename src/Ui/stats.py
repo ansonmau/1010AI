@@ -3,13 +3,14 @@ from collections import deque
 DECIMAL_CUTOFF = 2
 
 class StatTrak:
-    def __init__(self, total_episode_count, avgs_sample_size=100):
-        self._data_log = deque(maxlen=avgs_sample_size)
+    def __init__(self, total_episode_count, avgs_size=100):
+        self._data_log = deque(maxlen=avgs_size)
+        self._loss_log = []
 
         self.d_ai = {
                 "last reward":      0,
                 "total reward":     0,
-                "loss":             0,
+                "loss":             float(0),
                 "epsilon":          0,
                 }
 
@@ -23,7 +24,7 @@ class StatTrak:
                 "turns":            float(0),
                 "final reward":     float(0),
                 "game points":      float(0),
-                "final loss":             float(0),
+                "final loss":       float(0),
                 }
 
         self.d_highscores = {
@@ -51,17 +52,6 @@ class StatTrak:
         else: # must be session
             self._update_session(data)
 
-            log_data = {
-                    "final reward": self.d_ai["total reward"],
-                    "loss":         self.d_ai["loss"],
-                    "game points":  self.d_game["points"],
-                    "turns":        self.d_game["turns"],
-                    }
-            self._data_log.append(log_data)
-
-            self.__update_averages()
-            self.__update_highscores()
-
         self.__round_floats() # working with floats T_T
 
     def new_episode(self):
@@ -69,6 +59,20 @@ class StatTrak:
         game = self.d_game
         misc = self.d_misc
 
+        # ── log relevant data ─────────────────────────────────────────────
+        log_data = {
+                "final reward": self.d_ai["total reward"],
+                "loss":         self.d_ai["loss"],
+                "game points":  self.d_game["points"],
+                "turns":        self.d_game["turns"],
+                }
+        self._data_log.append(log_data)
+
+        # ── update averages + highscore ───────────────────────────────────────
+        self.__update_averages()
+        self.__update_highscores()
+
+        # ── reset values ──────────────────────────────────────────────────────
         # incrementing
         misc["episode count"] += 1
 
@@ -78,6 +82,8 @@ class StatTrak:
         game["points"]           = 0
         game["turns"]            = 0
         game["board fill ratio"] = 0
+        self._loss_log           = []
+
 
     # +------------------------------------------------+
     # |                    Helpers                     |
@@ -89,8 +95,7 @@ class StatTrak:
 
         """
         - last reward
-        - total reward
-        - total steps
+        - loss
         - game points
         - board fill
         """
@@ -102,16 +107,15 @@ class StatTrak:
 
         # value setting
         ai["last reward"]        = data["reward"]
-        ai["loss"]               = data["loss"]
         game["points"]           = data["points"]
         game["board fill ratio"] = data["board_fill_ratio"]
 
+        # loss
+        self._loss_log.append(data["loss"])
+        ai["loss"] = sum(self._loss_log) / len(self._loss_log)
+
 
     def _update_session(self, data):
-        """
-        This function assumes that it is being called after an episode has
-        been completed
-        """
         ai   = self.d_ai
         game = self.d_game
         avgs = self.d_average
@@ -120,17 +124,15 @@ class StatTrak:
 
         """
         - epsilon
-        - loss
-        - averages
-        - highscores
-        - episode count
         """
-        
 
         # value setting
         ai["epsilon"] = data["epsilon"]
 
 
+    # +------------------------------------------------+
+    # |              Averages / Highscore              |
+    # +------------------------------------------------+
     def __update_averages(self):
         ai   = self.d_ai
         game = self.d_game
