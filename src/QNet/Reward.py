@@ -3,6 +3,7 @@ from Game.Board.Board import Board
 from Game.Shape.Shape import Shape
 from collections      import deque
 
+NUM_BLOCKS_CLOSE_TO_FILLING = 7
 
 class RewardCalculator:
     def __init__(self, board: "Board", discount=0.99):
@@ -35,8 +36,8 @@ class RewardCalculator:
                 # scale by 10 so the power will work as intended then scale back down
                 # "fill_penalty": -0.5 * (10 * fill_ratio)**2,
                 # think it might be better to ignore multi-lines for training
-                "line_clear_reward": 100 if self._board.get_point_diff() else 0,
-                "line_prog_reward": (1-fill_ratio)**2 * self._line_progress_reward(),
+                "line_clear_reward": self._line_clear_reward(),
+                "line_prog_reward": (1-fill_ratio)**2 * ( 0.1 * self._line_progress_reward() ),
                 "shaping_reward": self._get_shaping_reward(discount=0.99)
                 }
 
@@ -47,7 +48,7 @@ class RewardCalculator:
         if self._data["can_play"]:
             return sum(rewards[k] for k in rewards)
         else:
-            return -200
+            return -300
 
     def enable_print_rewards(self):
         self._print_rewards = True
@@ -59,6 +60,8 @@ class RewardCalculator:
     def _line_progress_reward(self):
         """
         rewards building towards a line
+        > blocks on the same line count for higher reward
+        > connected blocks are rewarded more
         """
 
         def connected_blocks(line, ind):
@@ -74,6 +77,10 @@ class RewardCalculator:
                 ptr -= 1
 
             return c
+        
+        def blocks_on_line(line):
+            return sum([1 if x else 0 for x in line])
+
 
         reward         = 0
         max_row_reward = 0
@@ -83,20 +90,36 @@ class RewardCalculator:
         shape,pos       = self._data["last_move"]
         block_positions = self._board.utils.get_shape_block_positions(shape, pos)
 
-
         rows            = [x[0] for x in block_positions]
         cols            = [x[1] for x in block_positions]
 
         for c_row in set(rows):
             # choose a random block on the row
             piece_on_row = next(bPos for bPos in block_positions if bPos[0] == c_row)
-            cReward = connected_blocks(self._board.get_row(piece_on_row[0]), piece_on_row[1])
+
+            cReward = 0
+            r       = self._board.get_row(piece_on_row[0])
+            nBlk    = blocks_on_line(r)
+
+            cReward += connected_blocks(r, piece_on_row[1])
+            if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
+                cReward += nBlk
+
             max_row_reward = max(max_row_reward, cReward)
+
             
         for c_col in set(cols):
             piece_on_col = next(bPos for bPos in block_positions if bPos[1] == c_col) # list of positions w/ this col
-            cReward = connected_blocks(self._board.get_col(piece_on_col[1]), piece_on_col[0])
+
+            cReward = 0
+            c       = self._board.get_col(piece_on_col[1])
+            nBlk = blocks_on_line(c)
+
+            cReward += connected_blocks(c, piece_on_col[0])
             max_col_reward = max(max_col_reward, cReward)
+
+            if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
+                reward += nBlk
 
         if self._print_rewards:
             print(f"max row reward: {max_row_reward}")
@@ -106,6 +129,17 @@ class RewardCalculator:
         reward += max_col_reward ** 2
 
         return reward
+    
+    def _line_clear_reward(self):
+        reward = 0
+
+        if self._board.get_point_diff():
+            reward += 100
+            reward += 100 * (1 - self._board.utils.get_filled_ratio())
+
+        return reward
+
+
 
 
     # +------------------------------------------------+
