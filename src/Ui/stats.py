@@ -7,10 +7,13 @@ class StatTrak:
         self._data_log = deque(maxlen=avgs_size)
         self._loss_log = []
 
+
+        self.d_reward_list = {} # set to new dict every ep
+
         self.d_ai = {
                 "last reward":      0,
                 "total reward":     0,
-                "avg loss":             float(0),
+                "avg loss":         float(0),
                 "epsilon":          0,
                 }
 
@@ -24,7 +27,7 @@ class StatTrak:
                 "turns":            float(0),
                 "final reward":     float(0),
                 "game points":      float(0),
-                "final loss":       float(0),
+                "loss":             float(0),
                 }
 
         self.d_highscores = {
@@ -37,6 +40,16 @@ class StatTrak:
                 "total turns":      0,
                 "episode count":    0,
                 "total episodes":   total_episode_count,
+                }
+
+        # for looping through these
+        self._ds = {
+                "AI":         self.d_ai,
+                "Game":       self.d_game,
+                "Averages":   self.d_average,
+                "Highscores": self.d_highscores,
+                "Misc":       self.d_misc,
+                "RewardList": self.d_reward_list,
                 }
 
     # +------------------------------------------------+
@@ -52,7 +65,6 @@ class StatTrak:
         else: # must be session
             self._update_session(data)
 
-        self.__round_floats() # working with floats T_T
 
     def new_episode(self):
         ai = self.d_ai
@@ -62,7 +74,7 @@ class StatTrak:
         # ── log relevant data ─────────────────────────────────────────────
         log_data = {
                 "final reward": self.d_ai["total reward"],
-                "avg loss":         self.d_ai["avg loss"],
+                "avg loss":     self.d_ai["avg loss"],
                 "game points":  self.d_game["points"],
                 "turns":        self.d_game["turns"],
                 }
@@ -74,15 +86,45 @@ class StatTrak:
 
         # ── reset values ──────────────────────────────────────────────────────
         # incrementing
-        misc["episode count"] += 1
+        misc["episode count"]    += 1
 
-        ai["last reward"]        = 0
-        ai["total reward"]       = 0
-        ai["avg loss"]               = 0
-        game["points"]           = 0
-        game["turns"]            = 0
-        game["board fill ratio"] = 0
-        self._loss_log           = []
+        ai["last reward"]         = 0
+        ai["total reward"]        = 0
+        ai["avg loss"]            = 0
+        game["points"]            = 0
+        game["turns"]             = 0
+        game["board fill ratio"]  = 0
+        self._loss_log            = []
+
+    def get_str(self):
+        final_str = []       
+
+        def gen_title(s):
+            return f"-- {s} ---------"
+        
+        def d_to_s(d):
+            s = [f"{key:18}: {d[key]}" for key in d]
+            return '\n'.join(s)
+
+        def stack(list, nSections):
+            titles = [n for n in range(nSections) if n%2 == 0]
+            bodies = [n for n in range(nSections) if n%2 == 1]
+
+
+        self.__round_floats() # working with floats T_T
+
+        for k,v in self._ds.items():
+            final_str.append(gen_title(k))
+            final_str.append(d_to_s(v))
+
+        return '\n'.join(final_str)
+
+    def get_save_data(self):
+        d = {
+                "Averages": self.d_average,
+                "Highscores": self.d_highscores
+                }
+        return d
 
 
     # +------------------------------------------------+
@@ -92,6 +134,7 @@ class StatTrak:
         ai = self.d_ai
         game = self.d_game
         misc = self.d_misc
+        rl = self.d_reward_list
 
         """
         - last reward
@@ -99,7 +142,6 @@ class StatTrak:
         - game points
         - board fill
         """
-
         # game
         game["board fill ratio"]  = data["board_fill_ratio"]
         game["points"]           += data["points"]
@@ -109,6 +151,9 @@ class StatTrak:
         # ai
         ai["last reward"]         = data["reward"]
         ai["total reward"]       += data["reward"]
+
+        # reward list
+        rl.update(data["reward_list"])
 
         # loss
         self._loss_log.append(data["loss"])
@@ -178,36 +223,11 @@ class StatTrak:
                 if isinstance(d[key], float):
                     d[key] = round(d[key], 2)
 
-        for d in [self.d_ai, self.d_game, self.d_average, self.d_highscores, self.d_misc]:
+        for d in self._ds.values():
             round_floats(d)
 
+
         
-    def get_str(self):
-        final_str = []       
-
-        def gen_title(s):
-            return f"-- {s} ---------"
-        
-        def d_to_s(d):
-            s = [f"{key:18}: {d[key]}" for key in d]
-            return '\n'.join(s)
-
-        final_str.append(gen_title("AI"))
-        final_str.append(d_to_s(self.d_ai))
-
-        final_str.append(gen_title("Game"))
-        final_str.append(d_to_s(self.d_game))
-
-        final_str.append(gen_title(f"Average ({self._data_log.maxlen})"))
-        final_str.append(d_to_s(self.d_average))
-
-        final_str.append(gen_title("Highscore"))
-        final_str.append(d_to_s(self.d_highscores))
-
-        final_str.append(gen_title("Misc"))
-        final_str.append(d_to_s(self.d_misc))
-
-        return '\n'.join(final_str)
 
     
 
