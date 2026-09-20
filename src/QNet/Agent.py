@@ -111,11 +111,10 @@ class Agent:
         # get updated info
         obs      = self._observe_gamestate()
         can_play = self._can_play()
-        reward   = self._reward_calculator.calc()
+        reward, reward_list   = self._reward_calculator.calc()
 
         self._step_count += 1
-
-        return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index), "loss": self._last_loss_val}
+        return obs, reward, can_play, {"gai_move": self.gai.get(chosen_index), "loss": self._last_loss_val, "reward_list": reward_list}
     
     def update_target_net(self, update_interval = TARGET_NET_UPDATE_INTERVAL):
         if self._step_count % update_interval == 0:
@@ -248,6 +247,9 @@ class Agent:
         self.optimizer.zero_grad() # clear history
         loss.backward()             # backpropogate
         self.optimizer.step()      # update weights
+
+    def get_save_states(self):
+        return self._qnet.state_dict(), self.optimizer.state_dict()
 
 
 
