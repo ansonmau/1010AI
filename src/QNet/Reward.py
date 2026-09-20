@@ -3,7 +3,7 @@ from Game.Board.Board import Board
 from Game.Shape.Shape import Shape
 from collections      import deque
 
-NUM_BLOCKS_CLOSE_TO_FILLING = 7
+NUM_BLOCKS_CLOSE_TO_FILLING = 6
 
 class RewardCalculator:
     def __init__(self, board: "Board", discount=0.99):
@@ -14,6 +14,8 @@ class RewardCalculator:
                 "last_move": (),
                 "can_play": False,
                 }
+
+        self._reward_info = {}
 
         self._print_rewards = False
 
@@ -26,29 +28,28 @@ class RewardCalculator:
                 raise RuntimeError(f"Invalid Dict passed to RewardCalculator. Invalid key = {key}")
 
         self._data.update(data)
+        self._data.update({
+            "placed_block_positions": self._board.utils.get_shape_block_positions(*self._data["last_move"]),
+            })
+
 
     def calc(self):
         d = self._data
 
-        fill_ratio = self._board.utils.get_filled_ratio()
+        death_penalty = -200
+        fr = self._board.utils.get_filled_ratio()
 
         rewards = {
-                # scale by 10 so the power will work as intended then scale back down
-                # "fill_penalty": -0.5 * (10 * fill_ratio)**2,
-                # think it might be better to ignore multi-lines for training
+                "fill_penalty": 0.5 * -( (10*fr)**2 ),
+                "line_prog_reward":  0.1 * self._line_progress_reward(),
+                # "connects_blocks": 0.1 * self._connects_blocks_reward(),
                 "line_clear_reward": self._line_clear_reward(),
-                "line_prog_reward": (1-fill_ratio)**2 * ( 0.1 * self._line_progress_reward() ),
-                "shaping_reward": self._get_shaping_reward(discount=0.99)
+                "shaping_reward":    self._get_shaping_reward(discount=self._discount),
                 }
 
-        if self._print_rewards:
-            for k in rewards:
-                print(f"{k}: {rewards[k]}")
+        self._reward_info.update(rewards)
 
-        if self._data["can_play"]:
-            return sum(rewards[k] for k in rewards)
-        else:
-            return -300
+        return sum(rewards[k] for k in rewards) if self._data["can_play"] else death_penalty, self._reward_info
 
     def enable_print_rewards(self):
         self._print_rewards = True
@@ -59,85 +60,119 @@ class RewardCalculator:
     # +------------------------------------------------+
     def _line_progress_reward(self):
         """
-        rewards building towards a line
-        > blocks on the same line count for higher reward
-        > connected blocks are rewarded more
+        rewards 
         """
 
-        def connected_blocks(line, ind):
-            c = 0
-            ptr = ind+1
-            while ptr < len(line) and line[ptr]:
-                c += 1
-                ptr += 1
+        info = {}
 
-            ptr = ind-1
-            while 0 <= ptr and line[ptr]:
+        def connected_blocks(line, placed_inds):
+            """
+            returns number of blocks connected to the placed
+            section
+            """
+            p = sorted(placed_inds)
+            c = 0
+
+            l = p[0]
+            r = p[-1]
+
+            while r+1 < len(line) and line[r+1]:
                 c += 1
-                ptr -= 1
+                r += 1
+
+            while 0 <= l-1 and line[l-1]:
+                c += 1
+                l -= 1
 
             return c
-        
-        def blocks_on_line(line):
+
+        def count_blocks(line):
             return sum([1 if x else 0 for x in line])
 
+        rRwd   = 0 # row reward
+        cRwd   = 0 # col reward
+        bP    = self._data["placed_block_positions"]
+        uRows = set([x[0] for x in bP])
+        uCols = set([x[1] for x in bP])
 
-        reward         = 0
-        max_row_reward = 0
-        max_col_reward = 0
+        for u in uRows:
+            placed_inds = [x[1] for x in bP if x[0] == u]
+            board_row = self._board.get_row(u)
+            nb = count_blocks(board_row) - len(placed_inds)
+            cb = connected_blocks(board_row, placed_inds)
 
-        b               = self._board
-        shape,pos       = self._data["last_move"]
-        block_positions = self._board.utils.get_shape_block_positions(shape, pos)
+            rRwd += ( cb * 2 ) + ( nb - cb )
 
-        rows            = [x[0] for x in block_positions]
-        cols            = [x[1] for x in block_positions]
+        for u in uCols:
+            placed_inds = [x[0] for x in bP if x[1] == u]
+            board_col = self._board.get_col(u)
+            nb = count_blocks(board_col) - len(placed_inds)
+            cb = connected_blocks(board_col, placed_inds)
 
-        for c_row in set(rows):
-            # choose a random block on the row
-            piece_on_row = next(bPos for bPos in block_positions if bPos[0] == c_row)
+            cRwd += ( cb * 2 ) + ( nb-cb )
 
-            cReward = 0
-            r       = self._board.get_row(piece_on_row[0])
-            nBlk    = blocks_on_line(r)
+        self._reward_info.update({
+            "(line pg) rows": rRwd,
+            "(line pg) cols": cRwd,
+            })
 
-            cReward += connected_blocks(r, piece_on_row[1])
-            if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
-                diff = nBlk - NUM_BLOCKS_CLOSE_TO_FILLING
-                cReward += diff
+        return rRwd + cRwd
 
-            max_row_reward = max(max_row_reward, cReward)
+    def _connects_blocks_reward(self):
+        """
+        rewards agent for placing a piece that fills a hole in a row/col
+        """
+        def connect_check(line, placed_on_line):
 
-            
-        for c_col in set(cols):
-            piece_on_col = next(bPos for bPos in block_positions if bPos[1] == c_col) # list of positions w/ this col
+            # get left-most and right-most block
+            p = sorted(placed_on_line)
+            l = p[0]
+            r = p[-1]
 
-            cReward = 0
-            c       = self._board.get_col(piece_on_col[1])
-            nBlk = blocks_on_line(c)
+            # check if there is an empty cell next to them
+            # not line-1 or 
+            if 0 <= l-1 and not line[l-1]:
+                return False
+            if r+1 < len(line) and not line[r+1]:
+                return False
 
-            cReward += connected_blocks(c, piece_on_col[0])
-            max_col_reward = max(max_col_reward, cReward)
+            return True
+        
+        rRwd = 0
+        cRwd = 0
 
-            if (nBlk >= NUM_BLOCKS_CLOSE_TO_FILLING):
-                diff = nBlk - NUM_BLOCKS_CLOSE_TO_FILLING
-                reward += nBlk
+        bP = self._data["placed_block_positions"]
 
-        if self._print_rewards:
-            print(f"max row reward: {max_row_reward}")
-            print(f"max col reward: {max_col_reward}")
+        uRows = set([x[0] for x in bP])
+        uCols = set([x[1] for x in bP])
 
-        reward += max_row_reward ** 2
-        reward += max_col_reward ** 2
+        for u in uRows:
+            placed_on_line = [x[1] for x in bP if x[0] == u]
+            rRwd += 10 if connect_check(self._board.get_row(u), placed_on_line) else 0
 
-        return reward
+        for u in uCols:
+            placed_on_line = [x[0] for x in bP if x[1] == u]
+            cRwd += 10 if connect_check(self._board.get_col(u), placed_on_line) else 0
+
+        self._reward_info.update({
+            "(connect reward) row": rRwd,
+            "(connect reward) col": cRwd,
+            })
+
+        return rRwd + cRwd
+
+
     
     def _line_clear_reward(self):
         reward = 0
 
+        # inverse board fill ratio
+        ibfr = 1 - self._board.utils.get_filled_ratio()
+
         if self._board.get_point_diff():
             reward += 100
-            reward += 100 * (1 - self._board.utils.get_filled_ratio())
+            reward += 100 * ibfr
+
 
         return reward
 
@@ -148,16 +183,15 @@ class RewardCalculator:
     # |                 Shaping Reward                 |
     # +------------------------------------------------+
     def _get_shaping_reward(self, discount=0.99):
-        def eval_board(board_arr):
+        def board_state_eval(board_arr):
             val1 = self.__board_value_line_completion(board_arr)
             val2 = self.__board_value_holes(board_arr)
-
             return val1 + val2
 
         curr_board = self._board.get_board()
         prev_board = self._board.get_prev_board()
 
-        return discount * eval_board(curr_board) - eval_board(prev_board)
+        return discount * board_state_eval(curr_board) - board_state_eval(prev_board)
 
 
     # +------------------------------------------------+
@@ -167,7 +201,22 @@ class RewardCalculator:
         """
         reward based on longest continuous row and longest continuous col
         """
+
+        # ── helper fncs ───────────────────────────────────────────────────────
+        def get_board_cols():
+            """
+            returns all columns in board_arr param
+            """
+            cols = []
+            for cCol in range(len(board_arr)):
+                col = [row[cCol] for row in board_arr]
+                cols.append(col)
+            return cols
+
         def longest_continuous_blocks(line):
+            """
+            takes an array and counts longest consecutive 1s
+            """
             max_c = 0
             c = 0
             for x in range(len(line)):
@@ -178,25 +227,39 @@ class RewardCalculator:
                 max_c = max(max_c, c)
             return max_c
 
-        def get_board_cols():
-            cols = []
-            for cCol in range(len(board_arr)):
-                col = [row[cCol] for row in board_arr]
-                cols.append(col)
-            return cols
+        def calc_line_value(line):
+            """
+            takes an array and calculates its value
+            value:
+                -> empty is worth a full line
+            """
+            v = 0
 
-        value = 0
-        max_row_reward = 0
-        max_col_reward = 0
+            nBlks = sum(1 if x else 0 for x in line)
+
+            if nBlks == 0:
+                v += 10
+            elif nBlks >= 3:
+                v += nBlks
+
+            return v
+
+        # ──────────────────────────────────────────────────────────────────────
+
+        vR = 0 # val row
+        vC = 0 # val col
 
         for row in board_arr:
-            max_row_reward = max(max_row_reward, longest_continuous_blocks(row))
+            vR += calc_line_value(row)
         for col in get_board_cols():
-            max_col_reward = max(max_col_reward, longest_continuous_blocks(col))
+            vC += calc_line_value(col)
 
-        value += max_row_reward + max_col_reward
+        self._reward_info.update({
+            "(SR.line_val) row": vR,
+            "(SR.line_val) col": vC,
+            })
 
-        return value
+        return vR + vC
 
     def __board_value_holes(self, board_arr):
         """
@@ -243,39 +306,13 @@ class RewardCalculator:
         holes = [(r, c) for r in range(rows) for c in range(cols)
                  if not board_arr[r][c] and not visited[r][c]]
 
+        nHoles     = 0
+        punishment = -100 # 1/19 chance to get single block to fix it, 3/19 a turn
+
         for hole in holes:
-            if solo_check(hole):
-                value -= 100
+            nHoles += 1 if solo_check(hole) else 0
 
-        return value
+        self._reward_info.update({"(SR.holes) count": nHoles})
 
+        return nHoles * punishment
 
-    # ╭────────────────────────────────────────────────╮
-    # │              Calculator Functions              │
-    # ╰────────────────────────────────────────────────╯
-    # def _adjacent_blocks_reward(self):
-    #     if self._last_move is None:
-    #         raise RuntimeError("Cannot calculate reward without knowing last move")
-    #
-    #     reward                = 0
-    #     shape, pos, block_pos = self._last_move
-    #     b                     = self._board
-    #
-    #     # +------------------------------------------------+
-    #     # | search in a cross around each block. exclude   |
-    #     # | blocks that are within the placed shape.       |
-    #     # +------------------------------------------------+
-    #     for block in block_pos:
-    #         r,c = block # (row,col) 
-    #
-    #         for t_row in [r+1, r-1]: # target row
-    #             target = (t_row, c)
-    #             if b.utils.is_valid_pos(target) and b.get(target) and (target not in block_pos):
-    #                 reward += 1
-    #
-    #         for t_col in [c+1,c-1]:
-    #             target = (r, t_col)
-    #             if b.utils.is_valid_pos(target) and b.get(target) and (target not in block_pos):
-    #                 reward += 1
-    #
-    #     return reward
