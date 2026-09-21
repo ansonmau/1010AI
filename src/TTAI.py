@@ -24,10 +24,10 @@ class TTAI:
         self.save_freq     = 50
         self.upload_freq   = 100
 
-        self.board = Board(10,10)
-        self.agent = Agent(self.board)
-        self.st    = StatTrak(self.episode_count, AVERAGES_WINDOW_SIZE)
-        self.chk = Checkpoint()
+        self.board         = Board(10,10)
+        self.agent         = Agent(self.board)
+        self.st            = StatTrak(self.episode_count, AVERAGES_WINDOW_SIZE)
+        self.chk           = Checkpoint()
 
 
     def run(self):
@@ -51,7 +51,7 @@ class TTAI:
                     "stats": self.st.get_save_data(),
                     "ep": curr_episode,
                     })
-                self.chk.save("15")
+                self.chk.save("16")
             
             if on(self.upload_freq):
                 self.chk.upload()
