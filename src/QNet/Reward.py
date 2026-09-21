@@ -70,13 +70,13 @@ class RewardCalculator:
         pb = self._board.get_prev_board()
 
         if self.__scan_numHoles(cb) > self.__scan_numHoles(pb):
-            return -100
+            return -30
         return 0
 
     def _penalty_availMoves(self):
         nL = self.__scan_numLegalMoves(self._board.get_board())
-        if nL < 500:
-            return -100
+        if nL < 200:
+            return -0.1 * (200-nL)
         return 0
 
 
