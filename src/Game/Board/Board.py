@@ -3,6 +3,7 @@ from Game.Board.Place import PlaceUtils
 from Game.Board.Utils import BoardUtils
 from Game.Board.ValidCheck import ValidCheckUtils
 from Game.Shape.Shape import Shape
+import copy
 
 class Board:
     DEFAULT_VALUE = False
@@ -24,7 +25,7 @@ class Board:
         self.place = PlaceUtils(self)
 
     def play_shape(self, shape: Shape, pos):
-        self._prev_board = self._rboard.copy()
+        self._prev_board = copy.deepcopy(self._rboard)
 
         err = self.place.shape(shape, pos)
         if err:
