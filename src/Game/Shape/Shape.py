@@ -30,6 +30,8 @@ class Shape:
             self._name = Shape.NAMES[id]
             self._pattern = Shape.PATTERNS[id]
             self._vol = self._calc_vol(id)
+            self._dims = Shape._get_dims_from_id(id)
+            self._offsets = Shape._get_offsets_from_id(id)
         
         def _calc_vol(self, id):
             vol = 0
@@ -43,10 +45,10 @@ class Shape:
         # ╰────────────────────────────────────────────────╯
 
         def get_offsets(self):
-            return Shape._get_offsets_from_id(self._id)
+            return self._offsets
 
         def get_dimensions(self):
-            return Shape._get_dims_from_id(self._id)
+            return self._dims
 
         def get_id(self):
             return self._id
