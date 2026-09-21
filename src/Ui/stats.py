@@ -103,7 +103,7 @@ class StatTrak:
             return f"-- {s} ---------"
         
         def d_to_s(d):
-            s = [f"{key:18}: {d[key]}" for key in d]
+            s = [f"{key:35}: {d[key]}" for key in d]
             return '\n'.join(s)
 
         def stack(list, nSections):
