@@ -39,8 +39,10 @@ class RewardCalculator:
         fr = self._board.utils.get_filled_ratio()
 
         rewards = {
-                "[ Final ] line clear reward": self._line_clear_reward(),
-                "[ Final ] shaping reward":    (0.1) * self._get_shaping_reward(discount=self._discount),
+                "[ Final ] avail moves penalty": self._penalty_availMoves(),
+                "[ Final ] hole penalty":        self._penalty_holes(),
+                "[ Final ] line clear reward":   self._reward_lineClear(),
+                "[ Final ] shaping reward":      (0.1) * self._get_shaping_reward(discount=self._discount),
                 }
 
         self._reward_info.update(rewards)
@@ -51,7 +53,7 @@ class RewardCalculator:
     # +------------------------------------------------+
     # |              Reward calculations               |
     # +------------------------------------------------+
-    def _line_clear_reward(self):
+    def _reward_lineClear(self):
         reward = 0
 
         # inverse board fill ratio
@@ -61,8 +63,21 @@ class RewardCalculator:
             reward += 100
             reward += 100 * ibfr
 
-
         return reward
+    
+    def _penalty_holes(self):
+        cb = self._board.get_board()
+        pb = self._board.get_prev_board()
+
+        if self.__scan_numHoles(cb) > self.__scan_numHoles(pb):
+            return -100
+        return 0
+
+    def _penalty_availMoves(self):
+        nL = self.__scan_numLegalMoves(self._board.get_board())
+        if nL < 500:
+            return -100
+        return 0
 
 
 
@@ -123,14 +138,14 @@ class RewardCalculator:
             vC += calc_line_value(col)
 
         self._reward_info.update({
-            "[ SR.line_val ] row": vR,
-            "[ SR.line_val ] col": vC,
-            "[ SR.line_val ] value": vR + vC,
+            "[ lineval ] row": vR,
+            "[ lineval ] col": vC,
+            "[ lineval ] value": vR + vC,
             })
 
         return vR + vC
 
-    def __BV_hole_penalty(self, board_arr):
+    def __scan_numHoles(self, board_arr):
         """
         Reduce value based on how many cells are in a hole
         (surrounded by blocks)
@@ -181,23 +196,19 @@ class RewardCalculator:
         for hole in holes:
             nHoles += 1 if solo_check(hole) else 0
 
-        fVal = nHoles * punishment
+        self._reward_info.update({"[ holes ] count": nHoles})
 
-        self._reward_info.update({"[ SR.holes ] count": nHoles})
-        self._reward_info.update({"[ SR.holes ] value": fVal})
+        return nHoles
 
-        return fVal
-
-    def __BV_legal_moves(self, board_arr):
+    def __scan_numLegalMoves(self, board_arr):
         b = Board.from_arr(board_arr)
         nL = 0 # n legal moves
         for s in Shape.get_all_shapes():
             vp = b.check.get_all_valid_positions(s)
             nL += sum(1 if x else 0 for x in vp)
 
-        nL *= 0.5
         self._reward_info.update({
-            "[ SR.legal_moves ] value": nL,
+            "[ legal moves ] count": nL,
             })
 
         return nL
