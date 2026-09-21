@@ -3,6 +3,8 @@ import torch
 import subprocess
 import sys
 
+from xcmd import XCMD
+
 CHECKPOINT_DIR = "/home/ansonmau/dev/1010AI/checkpoints"
 
 class Checkpoint:
@@ -43,8 +45,9 @@ class Checkpoint:
         self.data.update(data)
 
     def upload(self):
-        cmds = ["cd ~/dev/pth_plot/", "source venv/bin/activate", f"python plot.py {self.save_folder} -o {self.folder_name}.html", "exit"]
-        self.run_in_new_terminal(" && ".join(cmds))
+        cmd = XCMD()
+        u = f"/home/ansonmau/dev/pth_plot/venv/bin/python3 /home/ansonmau/dev/pth_plot/plot.py {self.save_folder}/ -o /home/ansonmau/dev/pth_plot/{self.folder_name}.html"
+        cmd.x_async(u)
 
     # ──────────────────────────────────────────────────────────────────────
     def folder_check(self, save_folder):
@@ -57,13 +60,6 @@ class Checkpoint:
                 input()
                 self.ignore_warnings = True
 
-    def run_in_new_terminal(self, command):
-        if sys.platform == "win32":
-            subprocess.Popen(["cmd", "/k", command], creationflags=subprocess.CREATE_NEW_CONSOLE)
-        elif sys.platform == "darwin":
-            subprocess.run(["osascript", "-e", f'tell application "Terminal" to do script "{command}"'])
-        else:
-            subprocess.Popen(["gnome-terminal", "--", "bash", "-c", f"{command}; exec bash"])
 
 
 
