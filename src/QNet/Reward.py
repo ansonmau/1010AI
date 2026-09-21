@@ -1,3 +1,4 @@
+import subprocess
 from Game.Board.Board import Board
 from Game.Shape.Shape import Shape
 from collections      import deque
@@ -6,8 +7,9 @@ NUM_BLOCKS_CLOSE_TO_FILLING = 6
 
 class RewardCalculator:
     def __init__(self, board: "Board", discount=0.99):
-        self._board          = board
-        self._discount       = discount
+        self._board                = board
+        self._discount             = discount
+        self._previous_board_value = 0
 
         self._data = {
                 "last_move": (),
@@ -15,8 +17,6 @@ class RewardCalculator:
                 }
 
         self._reward_info = {}
-
-        self._print_rewards = False
 
     # ╭────────────────────────────────────────────────╮
     # │                      API                       │
@@ -40,15 +40,12 @@ class RewardCalculator:
 
         rewards = {
                 "[ Final ] line clear reward": self._line_clear_reward(),
-                "[ Final ] shaping reward":    self._get_shaping_reward(discount=self._discount),
+                "[ Final ] shaping reward":    (0.1) * self._get_shaping_reward(discount=self._discount),
                 }
 
         self._reward_info.update(rewards)
 
         return sum(rewards[k] for k in rewards) if self._data["can_play"] else death_penalty, self._reward_info
-
-    def enable_print_rewards(self):
-        self._print_rewards = True
 
 
     # +------------------------------------------------+
@@ -85,7 +82,9 @@ class RewardCalculator:
         pb = self._board.get_prev_board()
 
         cbV = board_state_eval(cb)
-        pbV = board_state_eval(pb)
+        pbV = self._previous_board_value if self._previous_board_value else board_state_eval(pb)
+
+        self._previous_board_value = cbV
 
         self._reward_info.update({
             "[ SR.board_eval ] curr eval": cbV,
@@ -196,6 +195,7 @@ class RewardCalculator:
             vp = b.check.get_all_valid_positions(s)
             nL += sum(1 if x else 0 for x in vp)
 
+        nL *= 0.5
         self._reward_info.update({
             "[ SR.legal_moves ] value": nL,
             })
