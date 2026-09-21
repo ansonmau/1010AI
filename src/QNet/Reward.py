@@ -67,16 +67,15 @@ class RewardCalculator:
     
     def _penalty_holes(self):
         cb = self._board.get_board()
-        pb = self._board.get_prev_board()
+        nHoles = self.__scan_numHoles(cb)
+        penalty = -30
 
-        if self.__scan_numHoles(cb) > self.__scan_numHoles(pb):
-            return -30
-        return 0
+        return nHoles * penalty
 
     def _penalty_availMoves(self):
         nL = self.__scan_numLegalMoves(self._board.get_board())
-        if nL < 200:
-            return -0.1 * (200-nL)
+        if nL < 500:
+            return -0.1 * (500-nL)
         return 0
 
 
@@ -199,12 +198,14 @@ class RewardCalculator:
 
         return nHoles
 
-    def __scan_numLegalMoves(self, board_arr):
+    def __scan_numLegalMoves(self, board_arr, ignore_single=True):
         b = Board.from_arr(board_arr)
         nL = 0 # n legal moves
+        all_shapes = Shape.get_all_shapes() 
+
         for s in Shape.get_all_shapes():
             vp = b.check.get_all_valid_positions(s)
-            nL += sum(1 if x else 0 for x in vp)
+            nL += len(vp)
 
         self._reward_info.update({
             "[ legal moves ] count": nL,
