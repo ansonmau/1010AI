@@ -126,6 +126,10 @@ class StatTrak:
                 }
         return d
 
+    def load_save_data(self, data):
+        pass
+
+
 
     # +------------------------------------------------+
     # |                 Update Helpers                 |
