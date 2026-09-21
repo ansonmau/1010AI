@@ -87,6 +87,10 @@ class Shape:
             return Shape(0)
 
         @staticmethod
+        def get_all_shapes():
+            return [Shape(s) for s in Shape.PATTERNS.keys()]
+
+        @staticmethod
         def _get_offsets_from_id(shapeID):
             offsets = []
             pattern = Shape.PATTERNS[shapeID]
@@ -117,4 +121,5 @@ class Shape:
                             width = col
                                         
             return (height+1, width+1)
+
 
