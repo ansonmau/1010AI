@@ -251,5 +251,13 @@ class Agent:
     def get_save_states(self):
         return self._qnet.state_dict(), self.optimizer.state_dict()
 
+    def load_save_states(self, states):
+        # expected: (qnet_state, optimizer_state)
+        qS = states[0]
+        oS = states[1]
+
+        self._qnet.load_state_dict(qS)
+        self.optimizer.load_state_dict(oS)
+
 
 
