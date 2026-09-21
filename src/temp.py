@@ -1,7 +1,5 @@
 from collections import deque
 
-from torch._higher_order_ops.flex_attention import flex_attention_backward_proxy_torch_dispatch_mode
-
 def printBoard(board_arr):
     n_rows, n_cols = 10, 10
 
@@ -102,6 +100,7 @@ def reward_test2(board_arr):
         return value
 
 
+
 board_arr = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
              [0, 1, 0, 0, 1, 1, 1, 1, 0, 0], 
              [1, 1, 1, 0, 1, 0, 0, 1, 0, 0], 
@@ -113,10 +112,6 @@ board_arr = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
              [1, 0, 0, 1, 0, 1, 0, 0, 0, 0],
              [1, 0, 0, 1, 1, 0, 0, 0, 0, 0]]
 
-printBoard(board_arr)
 
-reward1 = reward_test1(board_arr)
-reward2 = reward_test2(board_arr)
-print(f"Row/Col Value: {reward1}")
-print(f"'Hole' Value: {reward2}")
+
 
