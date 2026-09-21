@@ -89,7 +89,6 @@ class RewardCalculator:
         def board_state_eval(board_arr):
             evals = [
                     self.__BV_line_progress(board_arr),
-                    self.__BV_legal_moves(board_arr),
                     ]
             return sum(evals)
 
