@@ -30,8 +30,9 @@ class ValidCheckUtils:
         return self.check_shape(shape, pos)
 
     def check_shape(self, shape: Shape, pos):
-        if shape.get_id() == 0:
+        if ( shape.get_id() == 0 ) or ( not self._board.get(pos) ):
             # null piece cannot be placed
+            # if pos is taken, guarenteed cannot be placed here
             return False
 
         row,col = pos
