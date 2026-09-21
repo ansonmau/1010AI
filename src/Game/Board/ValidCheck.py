@@ -61,3 +61,4 @@ class ValidCheckUtils:
                     possiblePositions.append(currPos)
                                 
         return possiblePositions
+

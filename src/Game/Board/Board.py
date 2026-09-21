@@ -85,6 +85,7 @@ class Board:
     def get_col(self, col_num):
         return [row[col_num] for row in self._rboard]
 
+
     def set(self, pos):
         row,col = pos
         self._rboard[row][col] = True
@@ -101,3 +102,16 @@ class Board:
 
     def _generate_board(self):
         return [[Board.DEFAULT_VALUE for _ in range(self._ncols)] for _ in range(self._nrows)]
+
+    @staticmethod
+    def from_arr(arr):
+        """
+        create board from 2d array to use board functionality
+        """
+        nR = len(arr)
+        nC = len(arr[0])
+
+        b = Board(nR, nC)
+        b._rboard = arr
+        
+        return b
