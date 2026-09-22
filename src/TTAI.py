@@ -33,11 +33,16 @@ class TTAI:
     def run(self):
         for curr_episode in range(self.episode_count):
             def on(freq):
+                """
+                helper fnc for freq checks
+                """
                 return curr_episode % freq == 0
 
+            # ── reset agent and stats ─────────────────────────────────────────────
             self.agent.reset()
             self.st.new_episode()
 
+            # ── freq checks ───────────────────────────────────────────────────────
             if on(self.greedy_freq):
                 cEps = 0
             else:
@@ -56,15 +61,15 @@ class TTAI:
             if on(self.upload_freq):
                 self.chk.upload()
 
+            # ── stat update ───────────────────────────────────────────────────────
             self.st.update({
                 "type": "session",
                 "epsilon": cEps,
                 })
 
-
+            # ── main loop ─────────────────────────────────────────────────────────
             x = cEps==0
             while self.agent._can_play():
-                # ── agent loop ────────────────────────────────────────────────────────nlucky sequenc
                 state = self.agent._observe_gamestate()
                 move = self.agent.choose_move(cEps)
                 next_state, reward, can_play, info = self.agent.step(move)
@@ -85,7 +90,7 @@ class TTAI:
                         }
                 self.st.update(ep_data)
 
-                # ── display ───────────────────────────────────────────────────────────
+                # ── display stats ─────────────────────────────────────────────────────
                 print(self.st.get_str())
                 self.agent.print_state()
 
