@@ -44,20 +44,14 @@ class Shape:
                     }
 
         def __init__(self, id):
-            self._id = id
-            self._name = Shape.NAMES[id]
+            self._id      = id
+            self._name    = Shape.NAMES[id]
             self._pattern = Shape.PATTERNS[id]
-            self._vol = self._calc_vol(id)
-            self._dims = Shape._get_dims_from_id(id)
             self._offsets = Shape._get_offsets_from_id(id)
-        
-        def _calc_vol(self, id):
-            vol = 0
-            for ch in Shape.PATTERNS[id]:
-                if ch == '1':
-                    vol += 1
+            self._dims    = self.__calc_dims_from_offsets()
 
-            return vol
+            # self._dims = Shape._get_dims_from_id(id)
+        
         # ╭────────────────────────────────────────────────╮
         # │                      API                       │
         # ╰────────────────────────────────────────────────╯
@@ -73,9 +67,6 @@ class Shape:
 
         def get_pattern(self):
             return self._pattern
-
-        def get_volume(self):
-            return self._vol
 
         def get_arr_repr(self):
             arr = []
@@ -93,6 +84,21 @@ class Shape:
         def __str__(self):
             return self._name
 
+        def __calc_dims_from_offsets(self):
+            """
+            quicker method to calculate dims but requires offsets to be
+            calculated already. better to use this and use the staticmethod
+            for external one-time use
+            """
+            if self._id == 0:
+                return (0,0)
+
+            height = max([x[0] for x in self._offsets])
+            width = max([x[1] for x in self._offsets])
+
+            return (height+1, width+1)
+
+
         @staticmethod
         def from_name(name):
             id = Shape.NAMES.index(name)
@@ -107,8 +113,15 @@ class Shape:
             return Shape(0)
 
         @staticmethod
-        def get_all_shapes():
-            return [Shape(s) for s in Shape.PATTERNS.keys()]
+        def get_all_shapes(ignore=[]):
+            def trim(l1, l2):
+                """
+                removes elements from list
+                """
+                return [x for x in l1 if x not in l2]
+
+            all_s = [Shape(s) for s in Shape.PATTERNS.keys()]
+            return trim(all_s, ignore) 
 
         @staticmethod
         def _get_offsets_from_id(shapeID):
@@ -124,6 +137,7 @@ class Shape:
 
         @staticmethod
         def _get_dims_from_id(shapeID):
+            # assumes offsets are already generated
             spriteHeight = 5
             spriteWidth = 5
 
