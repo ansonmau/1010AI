@@ -55,7 +55,7 @@ class Checkpoint:
             os.makedirs(save_folder)
             self.ignore_warnings = True
         except FileExistsError:
-            if not self.ignore_warnings:
+            if ( not self.ignore_warnings ) and ( save_folder.split("/")[-1] != "temp" ):
                 print(f"[WARNING] Save folder already exists. continue? ({save_folder})")
                 input()
                 self.ignore_warnings = True
