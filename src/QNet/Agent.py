@@ -23,7 +23,7 @@ EPSILON_DECAY              = 0.995
 
 # optimizer settings
 LEARNING_RATE              = 0.001
-EXP_SIZE                   = 50000
+EXP_SIZE                   = 100000
 
 class Agent:                
     def __init__(self, board: "Board"):
@@ -90,8 +90,11 @@ class Agent:
     # ╰────────────────────────────────────────────────╯
     def reset(self):
         self._board.reset()
+
         self._step_count = 0
         self._fill_inventory()
+        self._reward_calculator.new_episode()
+
         return self._observe_gamestate()
 
     def step(self, chosen_index):
