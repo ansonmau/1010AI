@@ -137,9 +137,8 @@ class RewardCalculator:
             vC += calc_line_value(col)
 
         self._reward_info.update({
-            "[ lineval ] row": vR,
-            "[ lineval ] col": vC,
-            "[ lineval ] value": vR + vC,
+            "[ lineval ] row, col": (vR, vC),
+            "[ lineval ] total": vR + vC,
             })
 
         return vR + vC
