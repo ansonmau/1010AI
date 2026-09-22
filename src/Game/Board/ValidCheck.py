@@ -30,22 +30,15 @@ class ValidCheckUtils:
         return self.check_shape(shape, pos)
 
     def check_shape(self, shape: Shape, pos):
-        if ( shape.get_id() == 0 ) or ( not self._board.get(pos) ):
+        def within_bounds(pos):
+            return ( 0 <= pos[0] < self._nrows ) and ( 0 <= pos[1] < self._ncols )
+
+        if ( shape.get_id() == 0 ):
             # null piece cannot be placed
-            # if pos is taken, guarenteed cannot be placed here
             return False
 
-        row,col = pos
-        shape_height, shape_width = shape.get_dimensions()
-
-        # check if shape would even fit on the board at pos
-        # if 2x2, then it should check row+1 and col+1 assuming top left corner start
-        if (row + shape_height - 1) > self._nrows - 1 or (col + shape_width - 1) > self._ncols - 1:
-            return False
-
-        # check if any positions are already filled
         for block_position in self._board.utils.get_shape_block_positions(shape, pos):
-            if not self._is_empty(block_position):
+            if ( not within_bounds(block_position) ) or ( self._board.get(block_position) ):
                     return False
                 
         return True
