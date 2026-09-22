@@ -3,8 +3,6 @@ from Game.Board.Board import Board
 from Game.Shape.Shape import Shape
 from collections      import deque
 
-from QNet.Agent import LEARNING_RATE
-
 NUM_BLOCKS_CLOSE_TO_FILLING = 6
 
 class RewardCalculator:
