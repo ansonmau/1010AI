@@ -73,10 +73,23 @@ class RewardCalculator:
         return nHoles * penalty
 
     def _penalty_availMoves(self):
+        def clsFty(n):
+            """
+            returns closest increment of 50
+            """
+            r = n%50
+            m = n//50
+
+            if r < 25:
+                return 50 * m
+            else:
+                return 50 * (m+1)
+
+
         t = 200
         nL = self.__scan_numLegalMoves(self._board.get_board())
         if nL < t:
-            return -1 * (t-nL)
+            return -1 * clsFty(t-nL)
         return 0
 
 
