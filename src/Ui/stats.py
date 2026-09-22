@@ -28,6 +28,8 @@ class StatTrak:
                 "final reward":     float(0),
                 "game points":      float(0),
                 "loss":             float(0),
+                "hole count":       float(0),
+                "legal moves":      float(0),
                 }
 
         self.d_highscores = {
@@ -44,12 +46,12 @@ class StatTrak:
 
         # for looping through these
         self._ds = {
-                "AI":         self.d_ai,
-                "Game":       self.d_game,
-                "Averages":   self.d_average,
-                "Highscores": self.d_highscores,
-                "Misc":       self.d_misc,
-                "RewardList": self.d_reward_list,
+                "AI":               self.d_ai,
+                "Game":             self.d_game,
+                "Averages":         self.d_average,
+                "Highscores":       self.d_highscores,
+                "Misc":             self.d_misc,
+                "RewardList":       self.d_reward_list,
                 }
 
     # +------------------------------------------------+
@@ -122,7 +124,6 @@ class StatTrak:
     def get_save_data(self):
         d = {
                 "Averages": self.d_average,
-                "Highscores": self.d_highscores
                 }
         return d
 

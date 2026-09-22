@@ -56,7 +56,7 @@ class TTAI:
                     "stats": self.st.get_save_data(),
                     "ep": curr_episode,
                     })
-                self.chk.save("17")
+                self.chk.save("18")
             
             if on(self.upload_freq):
                 self.chk.upload()
