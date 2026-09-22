@@ -76,7 +76,7 @@ class RewardCalculator:
         t = 200
         nL = self.__scan_numLegalMoves(self._board.get_board())
         if nL < t:
-            return -0.1 * (t-nL)
+            return -1 * (t-nL)
         return 0
 
 
