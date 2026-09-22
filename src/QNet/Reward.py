@@ -9,7 +9,10 @@ class RewardCalculator:
     def __init__(self, board: "Board", discount=0.99):
         self._board                = board
         self._discount             = discount
-        self._previous_board_value = 0
+
+        self._prev = {
+                "board_value": float(0),
+                }
 
         self._data = {
                 "last_move": (),
@@ -31,18 +34,21 @@ class RewardCalculator:
             "placed_block_positions": self._board.utils.get_shape_block_positions(*self._data["last_move"]),
             })
 
+    def new_episode(self):
+        self._prev["board_value"] = self.__BV_eval(self._board.get_board())
+
 
     def calc(self):
         d = self._data
 
-        death_penalty = -200
+        death_penalty = -500
         fr = self._board.utils.get_filled_ratio()
 
         rewards = {
-                "[ Final ] avail moves penalty": self._penalty_availMoves(),
-                "[ Final ] hole penalty":        self._penalty_holes(),
+                "[ Final ] avail moves penalty": 0.05 * self._penalty_availMoves(),
+                "[ Final ] hole penalty":        0.1 * self._penalty_holes(),
                 "[ Final ] line clear reward":   self._reward_lineClear(),
-                "[ Final ] shaping reward":      (0.1) * self._get_shaping_reward(discount=self._discount),
+                "[ Final ] shaping reward":      0.1 * self._get_shaping_reward(discount=self._discount),
                 }
 
         self._reward_info.update(rewards)
@@ -67,48 +73,45 @@ class RewardCalculator:
     
     def _penalty_holes(self):
         cb = self._board.get_board()
-        nHoles = self.__scan_numHoles(cb)
-        penalty = -30
 
-        return nHoles * penalty
+        return self.__scan_numHoles(cb)
 
     def _penalty_availMoves(self):
-        def clsFty(n):
+        def close(n, M):
             """
-            returns closest increment of 50
+            returns closest increment of M
             """
-            r = n%50
-            m = n//50
 
-            if r < 25:
-                return 50 * m
+            m = M//2
+            r = n%M
+            b = n//M
+
+            if r <= m:
+                return M * b
             else:
-                return 50 * (m+1)
+                return M * (b+1)
 
 
-        t = 200
+        final_penalty = 0
+        t = 400
         nL = self.__scan_numLegalMoves(self._board.get_board())
         if nL < t:
-            return -1 * clsFty(t-nL)
-        return 0
+            final_penalty = close(t-nL, 100)
+
+        return -1 * final_penalty
 
     # +------------------------------------------------+
     # |                 Shaping Reward                 |
     # +------------------------------------------------+
     def _get_shaping_reward(self, discount=0.99):
-        def board_state_eval(board_arr):
-            evals = [
-                    self.__BV_line_progress(board_arr),
-                    ]
-            return sum(evals)
-
         cb = self._board.get_board()
-        pb = self._board.get_prev_board()
 
-        cbV = board_state_eval(cb)
-        pbV = self._previous_board_value if self._previous_board_value else board_state_eval(pb)
+        cbV = self.__BV_eval(cb)
+        pbV = self._prev["board_value"]
 
-        self._previous_board_value = cbV
+        self._prev.update({
+            "board_value": cbV
+            })
 
         self._reward_info.update({
             "[ SR.board_eval ] curr eval": cbV,
@@ -118,6 +121,13 @@ class RewardCalculator:
         return discount * cbV - pbV
 
     # ── Helpers ───────────────────────────────────────────────────────────
+    def __BV_eval(self, board_arr):
+        evals = [
+                self.__BV_line_progress(board_arr),
+                ]
+        return sum(evals)
+
+
     def __BV_line_progress(self, board_arr):
         """
         reward based on longest continuous row and longest continuous col
@@ -155,58 +165,62 @@ class RewardCalculator:
 
     def __scan_numHoles(self, board_arr):
         """
-        Reduce value based on how many cells are in a hole
-        (surrounded by blocks)
+        Find all enclosed empty regions (holes) and penalize based on size.
+        Holes >= 9 cells (3x3 equivalent) get no penalty.
+        Holes < 9 cells get penalty scaled linearly, maxing out at size 1.
         """
-        value = 0
-
         rows, cols = len(board_arr), len(board_arr[0])
-        visited = [[False]*cols for _ in range(rows)]
-
-        def solo_check(hole):
-            # checks if a hole is by itself
-            sr,sc = hole
-            for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
-                if not board_arr[sr+dr][sc+dc]:
-                    return False
-            return True
-
+        visited = [[False] * cols for _ in range(rows)]
 
         def bfs(sr, sc):
+            component = [(sr, sc)]
             q = deque([(sr, sc)])
             visited[sr][sc] = True
             while q:
                 r, c = q.popleft()
-                for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
-                    nr, nc = r+dr, c+dc
+                for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nr, nc = r + dr, c + dc
                     if 0 <= nr < rows and 0 <= nc < cols:
                         if not board_arr[nr][nc] and not visited[nr][nc]:
                             visited[nr][nc] = True
                             q.append((nr, nc))
+                            component.append((nr, nc))
+            return component
 
-        # 1. Flood fill from every False cell on the border
+        # 1. Flood fill from every False cell on the border (these aren't holes)
         for r in range(rows):
-            for c in (0, cols-1):
+            for c in (0, cols - 1):
                 if not board_arr[r][c] and not visited[r][c]:
                     bfs(r, c)
         for c in range(cols):
-            for r in (0, rows-1):
+            for r in (0, rows - 1):
                 if not board_arr[r][c] and not visited[r][c]:
                     bfs(r, c)
 
-        # 2. Any unvisited False cell is part of a hole
-        holes = [(r, c) for r in range(rows) for c in range(cols)
-                 if not board_arr[r][c] and not visited[r][c]]
+        # 2. Remaining unvisited False cells form enclosed holes
+        FULL_SIZE   = 9    # 3x3 equivalent — holes this size or larger are fine
+        MAX_PENALTY = -50  # penalty applied at hole size == 1
 
-        nHoles     = 0
-        punishment = -50 # 1/19 chance to get single block to fix it, 3/19 a turn
+        total_penalty = 0
+        hole_sizes = []
 
-        for hole in holes:
-            nHoles += 1 if solo_check(hole) else 0
+        for r in range(rows):
+            for c in range(cols):
+                if not board_arr[r][c] and not visited[r][c]:
+                    size = len(bfs(r, c))
+                    hole_sizes.append(size)
 
-        self._reward_info.update({"[ holes ] count": nHoles})
+                    if size < FULL_SIZE:
+                        severity = (FULL_SIZE - size) / (FULL_SIZE - 1)
+                        total_penalty += MAX_PENALTY * severity
 
-        return nHoles
+        self._reward_info.update({
+            "[ holes ] sizes":         hole_sizes,
+            "[ holes ] count":         len(hole_sizes),
+            "[ holes ] total penalty": total_penalty,
+            })
+
+        return total_penalty
 
     def __scan_numLegalMoves(self, board_arr, ignore_single=True):
         ignore = [0,1] if ignore_single else []
