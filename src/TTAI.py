@@ -17,7 +17,7 @@ AVERAGES_WINDOW_SIZE = 100
 
 class TTAI:
     def __init__(self):
-        self.episode_count = 100000
+        self.episode_count = 999999999
         self.batch_size    = 256
         self.greedy_freq   = 100
         self.epsilon       = 1
@@ -56,7 +56,8 @@ class TTAI:
                     "stats": self.st.get_save_data(),
                     "ep": curr_episode,
                     })
-                self.chk.save("18")
+                # last: 19
+                self.chk.save("temp")
             
             if on(self.upload_freq):
                 self.chk.upload()
