@@ -5,36 +5,45 @@ DECIMAL_CUTOFF = 2
 class StatTrak:
     def __init__(self, total_episode_count, avgs_size=100):
         self._data_log = deque(maxlen=avgs_size)
-        self._loss_log = []
+
 
 
         self.d_reward_list = {} # set to new dict every ep
 
+        self._avg_logs = {
+                "loss":             [],
+                "holes":            [],
+                "legal moves":      [],
+                "reward":           [],
+                }
+
         self.d_ai = {
-                "last reward":      0,
-                "total reward":     0,
+                "last reward":      float(0),
+                "avg reward":       float(0),
                 "avg loss":         float(0),
-                "epsilon":          0,
+                "avg holes":        float(0),
+                "avg legal moves":  float(0),
+                "epsilon":          float(0),
                 }
 
         self.d_game = {
                 "points":           0,
                 "turns":            0,
-                "board fill ratio": 0,
+                "board fill ratio": float(0),
                 }
 
         self.d_average = {
                 "turns":            float(0),
-                "final reward":     float(0),
+                "reward":           float(0),
                 "game points":      float(0),
                 "loss":             float(0),
-                "hole count":       float(0),
+                "holes":            float(0),
                 "legal moves":      float(0),
                 }
 
         self.d_highscores = {
                 "turns":            (0,0),
-                "final reward":     (0,0),
+                "avg reward":       (0,0),
                 "game points":      (0,0),
                 }
 
@@ -75,11 +84,14 @@ class StatTrak:
 
         # ── log relevant data ─────────────────────────────────────────────
         log_data = {
-                "final reward": self.d_ai["total reward"],
-                "avg loss":     self.d_ai["avg loss"],
-                "game points":  self.d_game["points"],
-                "turns":        self.d_game["turns"],
+                "avg reward":    self.d_ai["avg reward"],
+                "avg loss":        self.d_ai["avg loss"],
+                "game points":     self.d_game["points"],
+                "turns":           self.d_game["turns"],
+                "avg holes":       self.d_ai["avg holes"],
+                "avg legal moves": self.d_ai["avg legal moves"],
                 }
+
         self._data_log.append(log_data)
 
         # ── update averages + highscore ───────────────────────────────────────
@@ -90,13 +102,15 @@ class StatTrak:
         # incrementing
         misc["episode count"]    += 1
 
-        ai["last reward"]         = 0
-        ai["total reward"]        = 0
-        ai["avg loss"]            = 0
-        game["points"]            = 0
-        game["turns"]             = 0
-        game["board fill ratio"]  = 0
-        self._loss_log            = []
+        ai["last reward"]        = 0
+        ai["avg reward"]         = 0
+        ai["avg loss"]           = 0
+        game["points"]           = 0
+        game["turns"]            = 0
+        game["board fill ratio"] = 0
+        
+        for k in self._avg_logs:
+            self._avg_logs[k] = []
 
     def get_str(self):
         final_str = []       
@@ -155,14 +169,29 @@ class StatTrak:
 
         # ai
         ai["last reward"]         = data["reward"]
-        ai["total reward"]       += data["reward"]
 
         # reward list
         rl.update(data["reward_list"])
 
-        # loss
-        self._loss_log.append(data["loss"])
-        ai["avg loss"] = sum(self._loss_log) / len(self._loss_log)
+
+        # ── updating logs ─────────────────────────────────────────────────────
+        log = self._avg_logs
+
+        log["loss"].append(data["loss"])
+        log["legal moves"].append(data["reward_list"]["[ legal moves ] count"])
+        log["holes"].append(data["reward_list"]["[ holes ] count"])
+        log["reward"].append(data["reward"])
+
+        # ── calc avgs ─────────────────────────────────────────────────────────
+        def avg(l):
+            if len(l) == 0:
+                return 0
+            return sum(l) / len(l)
+
+        ai["avg loss"] = avg(log["loss"])
+        ai["avg legal moves"] = avg(log["legal moves"])
+        ai["avg holes"] = avg(log["holes"])
+        ai["avg reward"] = avg(log["reward"])
 
 
     def _update_session(self, data):
@@ -191,17 +220,15 @@ class StatTrak:
         log  = self._data_log
 
         def get_avg(feat):
-            avg = sum(d[feat] for d in self._data_log) / len(self._data_log)
-            return round(avg, DECIMAL_CUTOFF)
+            return sum(d[feat] for d in self._data_log) / len(self._data_log)
 
-        # Steps
-        avgs["turns"] = get_avg("turns")
-        # Final reward
-        avgs["final reward"] = get_avg("final reward")
-        # Game points
+        
+        avgs["turns"]       = get_avg("turns")
+        avgs["reward"]      = get_avg("avg reward")
         avgs["game points"] = get_avg("game points")
-        # Loss
-        avgs["loss"] = get_avg("avg loss")
+        avgs["loss"]        = get_avg("avg loss")
+        avgs["holes"]       = get_avg("avg holes")
+        avgs["legal moves"] = get_avg("avg legal moves")
 
     def __update_highscores(self):
         ai   = self.d_ai
@@ -215,8 +242,8 @@ class StatTrak:
             high["turns"] = (game["turns"], misc["episode count"])
 
         # Final reward
-        if ai["total reward"] > high["final reward"][0]:
-            high["final reward"] = (ai["total reward"], misc["episode count"])
+        if ai["avg reward"] > high["avg reward"][0]:
+            high["avg reward"] = (ai["avg reward"], misc["episode count"])
 
         # In-game Points
         if game["points"] > high["game points"][0]:
