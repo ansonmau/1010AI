@@ -75,9 +75,6 @@ class Board:
     def get(self, pos):
         row,col = pos
 
-        assert row < self._nrows
-        assert col < self._ncols
-
         return self._rboard[row][col]
     
     def get_row(self, row_num):

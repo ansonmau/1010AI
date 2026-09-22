@@ -1,4 +1,3 @@
-import enum
 from QNet.ExperienceReplay  import ExperienceReplay
 from QNet.GlobalActionIndex import GlobalActionIndex
 from QNet.Qnet              import QNet
