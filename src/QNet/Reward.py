@@ -3,6 +3,8 @@ from Game.Board.Board import Board
 from Game.Shape.Shape import Shape
 from collections      import deque
 
+from QNet.Agent import LEARNING_RATE
+
 NUM_BLOCKS_CLOSE_TO_FILLING = 6
 
 class RewardCalculator:
@@ -73,9 +75,10 @@ class RewardCalculator:
         return nHoles * penalty
 
     def _penalty_availMoves(self):
+        t = 200
         nL = self.__scan_numLegalMoves(self._board.get_board())
-        if nL < 500:
-            return -0.1 * (500-nL)
+        if nL < t:
+            return -0.1 * (t-nL)
         return 0
 
 
@@ -199,13 +202,14 @@ class RewardCalculator:
         return nHoles
 
     def __scan_numLegalMoves(self, board_arr, ignore_single=True):
+        ignore = [0,1] if ignore_single else []
+
+        all_shapes = Shape.get_all_shapes(ignore=ignore) 
         b = Board.from_arr(board_arr)
         nL = 0 # n legal moves
-        all_shapes = Shape.get_all_shapes() 
 
-        for s in Shape.get_all_shapes():
-            vp = b.check.get_all_valid_positions(s)
-            nL += len(vp)
+        for s in all_shapes:
+            nL += len(b.check.get_all_valid_positions(s))
 
         self._reward_info.update({
             "[ legal moves ] count": nL,
